@@ -14,7 +14,7 @@ import { Login } from './pages/Login';
 export function App() {
   return (
     <DesktopGate>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <div style={styles.layout}>
           <Header />
           <main style={styles.main}>

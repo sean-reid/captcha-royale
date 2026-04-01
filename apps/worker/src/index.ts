@@ -29,8 +29,13 @@ export default {
 
     // CORS — allow the frontend origin with credentials
     const origin = request.headers.get('Origin') || '';
+    // FRONTEND_URL may include a path (e.g. https://x.github.io/captcha-royale)
+    // but the Origin header is just the scheme+host, so extract the origin from FRONTEND_URL
+    const frontendOrigin = env.FRONTEND_URL
+      ? new URL(env.FRONTEND_URL).origin
+      : '';
     const allowedOrigins = [
-      env.FRONTEND_URL || '',
+      frontendOrigin,
       'http://localhost:5173',
       'http://localhost:4173',
     ].filter(Boolean);
