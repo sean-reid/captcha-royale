@@ -8,3 +8,4 @@ target/
 .env.local
 *.wasm
 !packages/captcha-engine/pkg/
+ARCHITECTURE.md
