@@ -135,9 +135,15 @@ async function handleCallback(request: Request, env: Env): Promise<Response> {
     }).toString(),
   });
 
-  const tokenData = (await tokenRes.json()) as { access_token?: string; error?: string };
+  const tokenText = await tokenRes.text();
+  let tokenData: { access_token?: string; error?: string; error_description?: string };
+  try {
+    tokenData = JSON.parse(tokenText);
+  } catch {
+    return new Response(`Token exchange returned non-JSON: ${tokenText.slice(0, 200)}`, { status: 400 });
+  }
   if (!tokenData.access_token) {
-    return new Response('Token exchange failed', { status: 400 });
+    return new Response(`Token exchange failed: ${tokenData.error || tokenText.slice(0, 200)}`, { status: 400 });
   }
 
   // Fetch user profile
@@ -149,41 +155,45 @@ async function handleCallback(request: Request, env: Env): Promise<Response> {
   // Extract provider ID, name, email, avatar
   const { providerId, displayName, email, avatarUrl } = extractProfile(provider, profile);
 
-  // Check if this OAuth identity already exists
-  let playerId = await findPlayerByOAuth(env, provider, providerId);
-
-  if (!playerId) {
-    // Try to link by email
-    if (email) {
-      playerId = await findPlayerByEmail(env, email);
-    }
+  try {
+    // Check if this OAuth identity already exists
+    let playerId = await findPlayerByOAuth(env, provider, providerId);
 
     if (!playerId) {
-      // Create new player
-      playerId = crypto.randomUUID();
-      await createPlayer(env, { id: playerId, display_name: displayName, avatar_url: avatarUrl });
+      // Try to link by email
+      if (email) {
+        playerId = await findPlayerByEmail(env, email);
+      }
+
+      if (!playerId) {
+        // Create new player
+        playerId = crypto.randomUUID();
+        await createPlayer(env, { id: playerId, display_name: displayName, avatar_url: avatarUrl });
+      }
+
+      // Link OAuth identity
+      await upsertOAuthIdentity(env, {
+        provider,
+        provider_id: providerId,
+        player_id: playerId,
+        email,
+      });
     }
 
-    // Link OAuth identity
-    await upsertOAuthIdentity(env, {
-      provider,
-      provider_id: providerId,
-      player_id: playerId,
-      email,
+    // Create session
+    const sessionToken = await createSession(env, playerId);
+
+    // Redirect to frontend app with token in URL fragment (not sent to server)
+    const frontendUrl = env.FRONTEND_URL || '/';
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: `${frontendUrl}#token=${sessionToken}`,
+      },
     });
+  } catch (err) {
+    return new Response(`Auth callback DB error: ${err instanceof Error ? err.message : String(err)}`, { status: 500 });
   }
-
-  // Create session
-  const sessionToken = await createSession(env, playerId);
-
-  // Redirect to frontend app with token in URL fragment (not sent to server)
-  const frontendUrl = env.FRONTEND_URL || '/';
-  return new Response(null, {
-    status: 302,
-    headers: {
-      Location: `${frontendUrl}#token=${sessionToken}`,
-    },
-  });
 }
 
 function extractProfile(

@@ -1,13 +1,21 @@
 import type { Env } from './index';
 
+type GameMode = 'battle_royale' | 'sprint';
+
 interface QueueEntry {
   playerId: string;
   displayName: string;
   elo: number;
+  mode: GameMode;
   joinedAt: number;
 }
 
-const MIN_PLAYERS = 4;
+const MODE_CONFIG: Record<GameMode, { minPlayers: number; targetPlayers: number; maxPlayers: number }> = {
+  battle_royale: { minPlayers: 4, targetPlayers: 8, maxPlayers: 16 },
+  sprint: { minPlayers: 2, targetPlayers: 4, maxPlayers: 8 },
+};
+
+const MIN_PLAYERS = 2;
 const TARGET_PLAYERS = 8;
 const MAX_PLAYERS = 16;
 const BRACKET_EXPANSION_30S = 1;
@@ -62,9 +70,12 @@ export class Matchmaker implements DurableObject {
     this.connections.set(playerId, server);
     this.playerBrackets.set(playerId, bracket);
 
+    // Read mode from query param
+    const mode = (url.searchParams.get('mode') || 'battle_royale') as GameMode;
+
     // Add to queue
     const queue = this.queues.get(bracket)!;
-    queue.push({ playerId, displayName, elo, joinedAt: Date.now() });
+    queue.push({ playerId, displayName, elo, mode, joinedAt: Date.now() });
 
     // Broadcast updated queue status to everyone in this bracket
     this.broadcastQueueStatus(bracket);
@@ -111,25 +122,35 @@ export class Matchmaker implements DurableObject {
   }
 
   private async runMatchmakingTick(): Promise<void> {
-    // Expand brackets for long-waiting players
     this.expandBrackets();
 
     for (const [bracket, queue] of this.queues) {
-      if (queue.length < MIN_PLAYERS) continue;
+      // Group by mode within each bracket
+      for (const mode of ['battle_royale', 'sprint'] as GameMode[]) {
+        const modePlayers = queue.filter((e) => e.mode === mode);
+        const config = MODE_CONFIG[mode];
 
-      const shouldCreate =
-        queue.length >= TARGET_PLAYERS ||
-        (queue.length >= MIN_PLAYERS && this.oldestWait(queue) > 15_000);
+        if (modePlayers.length < config.minPlayers) continue;
 
-      if (shouldCreate) {
-        const count = Math.min(queue.length, MAX_PLAYERS);
-        const players = queue.splice(0, count);
-        await this.createMatch(players);
+        const shouldCreate =
+          modePlayers.length >= config.targetPlayers ||
+          (modePlayers.length >= config.minPlayers && this.oldestWait(modePlayers) > 15_000);
+
+        if (shouldCreate) {
+          const count = Math.min(modePlayers.length, config.maxPlayers);
+          const matched = modePlayers.slice(0, count);
+          // Remove matched players from the main queue
+          for (const p of matched) {
+            const idx = queue.findIndex((e) => e.playerId === p.playerId);
+            if (idx !== -1) queue.splice(idx, 1);
+          }
+          await this.createMatch(matched, mode);
+        }
       }
     }
   }
 
-  private async createMatch(players: QueueEntry[]): Promise<void> {
+  private async createMatch(players: QueueEntry[], mode: GameMode): Promise<void> {
     const roomId = crypto.randomUUID();
     const roomObjId = this.env.MATCH_ROOM.idFromName(roomId);
     const room = this.env.MATCH_ROOM.get(roomObjId);
@@ -140,7 +161,7 @@ export class Matchmaker implements DurableObject {
         method: 'POST',
         body: JSON.stringify({
           players: players.map((p) => p.playerId),
-          mode: 'battle_royale',
+          mode,
         }),
       }),
     );

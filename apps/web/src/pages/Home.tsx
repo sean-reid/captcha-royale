@@ -21,7 +21,7 @@ export function Home() {
           Play Endless Mode
         </Button>
         <Button size="lg" variant="secondary" onClick={() => navigate('/queue')}>
-          Multiplayer (Coming Soon)
+          Multiplayer
         </Button>
       </div>
 

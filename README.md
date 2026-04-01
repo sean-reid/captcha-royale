@@ -76,9 +76,9 @@ captcha-royale/
 
 ## Game Modes
 
-- **Endless** (solo) — solve CAPTCHAs until you fail, track your high score. Fully playable now, no backend needed.
+- **Endless** (solo) — solve CAPTCHAs until you fail, track your high score. No backend needed.
 - **Battle Royale** (multiplayer) — 4-16 players, wrong answer or timeout = elimination, last standing wins
-- **Sprint** (multiplayer, planned) — solve 10 CAPTCHAs as fast as possible, pure speed
+- **Sprint** (multiplayer) — 2-8 players, solve 10 CAPTCHAs as fast as possible, no elimination, highest score wins
 
 ## Development
 

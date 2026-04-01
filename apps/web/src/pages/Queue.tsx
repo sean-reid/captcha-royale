@@ -11,6 +11,7 @@ export function Queue() {
   const navigate = useNavigate();
   const { player, loading } = useAuth();
   const [inQueue, setInQueue] = useState(false);
+  const [selectedMode, setSelectedMode] = useState<'battle_royale' | 'sprint'>('battle_royale');
   const [bracket, setBracket] = useState('');
   const [queuePlayers, setQueuePlayers] = useState<Array<{ id: string; display_name: string; elo: number }>>([]);
   const [waitTime, setWaitTime] = useState(0);
@@ -28,18 +29,25 @@ export function Queue() {
     [navigate],
   );
 
-  const queueWsUrl = wsUrl('/match/queue');
+  const queueWsUrl = wsUrl(`/match/queue?mode=${selectedMode}`);
 
   const { connected, connect, disconnect } = useWebSocket({
     url: queueWsUrl,
     onMessage: handleMessage,
   });
 
-  const joinQueue = () => {
-    if (inQueue) return; // prevent double-queue
+  const joinQueue = (mode: 'battle_royale' | 'sprint') => {
+    if (inQueue) return;
+    setSelectedMode(mode);
     setInQueue(true);
-    connect();
   };
+
+  // Connect when inQueue becomes true (after selectedMode is set)
+  useEffect(() => {
+    if (inQueue) {
+      connect();
+    }
+  }, [inQueue]);
 
   const leaveQueue = () => {
     setInQueue(false);
@@ -80,14 +88,13 @@ export function Queue() {
                 name="Battle Royale"
                 description="4-16 players. Wrong answer = eliminated. Last one standing wins."
                 players="4-16"
-                onSelect={joinQueue}
+                onSelect={() => joinQueue('battle_royale')}
               />
               <ModeCard
                 name="Sprint"
                 description="2-8 players. Solve 10 CAPTCHAs as fast as possible. Pure speed."
                 players="2-8"
-                onSelect={joinQueue}
-                disabled
+                onSelect={() => joinQueue('sprint')}
               />
             </div>
             <Button variant="secondary" onClick={() => navigate('/play')}>
@@ -101,7 +108,9 @@ export function Queue() {
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>Finding Match...</h1>
+      <h1 style={styles.title}>
+        Finding {selectedMode === 'sprint' ? 'Sprint' : 'Battle Royale'} Match...
+      </h1>
       <div style={styles.queueInfo}>
         <div style={styles.spinner} />
         {bracket && (
@@ -121,8 +130,10 @@ export function Queue() {
           </div>
         )}
         <p style={styles.detail}>Waiting: {waitTime}s</p>
-        {queuePlayers.length < 4 && (
-          <p style={styles.detail}>Need {4 - queuePlayers.length} more to start</p>
+        {queuePlayers.length < (selectedMode === 'sprint' ? 2 : 4) && (
+          <p style={styles.detail}>
+            Need {(selectedMode === 'sprint' ? 2 : 4) - queuePlayers.length} more to start
+          </p>
         )}
         {waitTime > 15 && (
           <p style={{ color: '#f39c12', fontSize: '13px' }}>
@@ -142,21 +153,19 @@ function ModeCard({
   description,
   players,
   onSelect,
-  disabled,
 }: {
   name: string;
   description: string;
   players: string;
   onSelect: () => void;
-  disabled?: boolean;
 }) {
   return (
-    <div style={{ ...styles.modeCard, opacity: disabled ? 0.5 : 1 }}>
+    <div style={styles.modeCard}>
       <h3 style={styles.modeName}>{name}</h3>
       <p style={styles.modeDesc}>{description}</p>
       <p style={styles.modePlayers}>{players} players</p>
-      <Button onClick={onSelect} disabled={disabled} size="sm">
-        {disabled ? 'Coming Soon' : 'Queue Up'}
+      <Button onClick={onSelect} size="sm">
+        Queue Up
       </Button>
     </div>
   );

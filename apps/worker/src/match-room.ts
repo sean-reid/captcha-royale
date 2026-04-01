@@ -256,10 +256,15 @@ export class MatchRoom implements DurableObject {
     this.roomState.roundAnswers = new Map();
     this.roomState.roundStartTime = Date.now();
 
-    const alivePlayers = this.getAlivePlayers();
-    if (alivePlayers.length <= 1) {
-      this.endMatch();
-      return;
+    const isSprint = this.roomState.mode === 'sprint';
+
+    if (!isSprint) {
+      // Battle Royale: end when 1 or fewer alive
+      const alivePlayers = this.getAlivePlayers();
+      if (alivePlayers.length <= 1) {
+        this.endMatch();
+        return;
+      }
     }
 
     if (this.roomState.round > this.roomState.maxRounds) {
@@ -324,8 +329,9 @@ export class MatchRoom implements DurableObject {
 
     this.roomState.roundAnswers.set(playerId, { correct, timeMs: serverTimeMs });
 
+    const isSprint = this.roomState.mode === 'sprint';
+
     if (correct) {
-      // Calculate points
       const tier = 1; // TODO: derive from captcha type
       const basePoints = tier * 10;
       const timeLimit = 10000; // TODO: from round params
@@ -339,23 +345,38 @@ export class MatchRoom implements DurableObject {
         player_id: playerId,
         time_ms: serverTimeMs,
       });
+    } else if (isSprint) {
+      // Sprint: wrong answer = no points, but player stays alive
+      player.roundsSurvived++;
+      this.broadcast({
+        type: 'player_solved',
+        player_id: playerId,
+        time_ms: serverTimeMs,
+      });
     } else {
+      // Battle Royale: wrong answer = eliminated
       this.eliminatePlayer(playerId, 'wrong');
     }
 
-    // Check if all alive players have answered
-    const aliveCount = this.getAlivePlayers().length;
+    // Check if all players have answered (in Sprint, all players are always alive)
+    const activeCount = isSprint ? this.players.size : this.getAlivePlayers().length;
     const answeredCount = this.roomState.roundAnswers.size;
-    if (answeredCount >= aliveCount) {
+    if (answeredCount >= activeCount) {
       this.endRound();
     }
   }
 
   private handleRoundTimeout(): void {
-    // Eliminate players who didn't answer
+    const isSprint = this.roomState.mode === 'sprint';
     for (const [, player] of this.players) {
       if (player.alive && !this.roomState.roundAnswers.has(player.playerId)) {
-        this.eliminatePlayer(player.playerId, 'timeout');
+        if (isSprint) {
+          // Sprint: timeout = 0 points, but stay in the game
+          this.roomState.roundAnswers.set(player.playerId, { correct: false, timeMs: 0 });
+          player.roundsSurvived++;
+        } else {
+          this.eliminatePlayer(player.playerId, 'timeout');
+        }
       }
     }
     this.endRound();
@@ -365,8 +386,13 @@ export class MatchRoom implements DurableObject {
     const standings = this.getStandings();
     this.broadcast({ type: 'round_end', standings });
 
+    const isSprint = this.roomState.mode === 'sprint';
     const alivePlayers = this.getAlivePlayers();
-    if (alivePlayers.length <= 1 || this.roomState.round >= this.roomState.maxRounds) {
+    const shouldEnd = isSprint
+      ? this.roomState.round >= this.roomState.maxRounds
+      : alivePlayers.length <= 1 || this.roomState.round >= this.roomState.maxRounds;
+
+    if (shouldEnd) {
       setTimeout(() => this.endMatch(), 2000);
     } else {
       // Reset round counter for alarm logic
