@@ -11,7 +11,7 @@ interface QueueEntry {
 }
 
 const MODE_CONFIG: Record<GameMode, { minPlayers: number; targetPlayers: number; maxPlayers: number }> = {
-  battle_royale: { minPlayers: 4, targetPlayers: 8, maxPlayers: 16 },
+  battle_royale: { minPlayers: 2, targetPlayers: 8, maxPlayers: 16 },
   sprint: { minPlayers: 2, targetPlayers: 4, maxPlayers: 8 },
 };
 
@@ -80,7 +80,8 @@ export class Matchmaker implements DurableObject {
     // Broadcast updated queue status to everyone in this bracket
     this.broadcastQueueStatus(bracket);
 
-    // Schedule matchmaking tick
+    // Try to match immediately, then schedule recurring tick
+    await this.runMatchmakingTick();
     this.scheduleAlarm();
 
     return new Response(null, { status: 101, webSocket: client });

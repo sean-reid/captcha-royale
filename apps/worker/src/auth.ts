@@ -17,7 +17,7 @@ const PROVIDERS: Record<string, ProviderConfig> = {
     scopes: ['openid', 'email', 'profile'],
   },
   discord: {
-    authUrl: 'https://discord.com/api/oauth2/authorize',
+    authUrl: 'https://discord.com/oauth2/authorize',
     tokenUrl: 'https://discord.com/api/oauth2/token',
     profileUrl: 'https://discord.com/api/users/@me',
     scopes: ['identify', 'email'],
@@ -148,9 +148,21 @@ async function handleCallback(request: Request, env: Env): Promise<Response> {
 
   // Fetch user profile
   const profileRes = await fetch(config.profileUrl, {
-    headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    headers: {
+      Authorization: provider === 'github'
+        ? `token ${tokenData.access_token}`
+        : `Bearer ${tokenData.access_token}`,
+      Accept: 'application/json',
+      'User-Agent': 'CaptchaRoyale/1.0',
+    },
   });
-  const profile = (await profileRes.json()) as Record<string, unknown>;
+  const profileText = await profileRes.text();
+  let profile: Record<string, unknown>;
+  try {
+    profile = JSON.parse(profileText);
+  } catch {
+    return new Response(`Profile fetch returned non-JSON: ${profileText.slice(0, 300)}`, { status: 400 });
+  }
 
   // Extract provider ID, name, email, avatar
   const { providerId, displayName, email, avatarUrl } = extractProfile(provider, profile);
