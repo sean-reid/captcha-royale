@@ -2,6 +2,7 @@ import type { Env } from './index';
 
 interface QueueEntry {
   playerId: string;
+  displayName: string;
   elo: number;
   joinedAt: number;
 }
@@ -43,14 +44,15 @@ export class Matchmaker implements DurableObject {
       return new Response('Missing playerId', { status: 400 });
     }
 
-    // Get player ELO from D1
+    // Get player info from D1
     const player = await this.env.DB.prepare(
-      'SELECT elo FROM players WHERE id = ?',
+      'SELECT elo, display_name FROM players WHERE id = ?',
     )
       .bind(playerId)
-      .first<{ elo: number }>();
+      .first<{ elo: number; display_name: string }>();
 
     const elo = player?.elo ?? 1000;
+    const displayName = player?.display_name ?? 'Player';
     const bracket = this.getBracket(elo);
 
     const pair = new WebSocketPair();
@@ -62,17 +64,10 @@ export class Matchmaker implements DurableObject {
 
     // Add to queue
     const queue = this.queues.get(bracket)!;
-    queue.push({ playerId, elo, joinedAt: Date.now() });
+    queue.push({ playerId, displayName, elo, joinedAt: Date.now() });
 
-    // Send queue status
-    server.send(
-      JSON.stringify({
-        type: 'queue_status',
-        bracket,
-        position: queue.length,
-        playersInBracket: queue.length,
-      }),
-    );
+    // Broadcast updated queue status to everyone in this bracket
+    this.broadcastQueueStatus(bracket);
 
     // Schedule matchmaking tick
     this.scheduleAlarm();
@@ -97,6 +92,8 @@ export class Matchmaker implements DurableObject {
       const queue = this.queues.get(bracket)!;
       const idx = queue.findIndex((e) => e.playerId === playerId);
       if (idx !== -1) queue.splice(idx, 1);
+      // Notify remaining players
+      this.broadcastQueueStatus(bracket);
     }
   }
 
@@ -235,6 +232,27 @@ export class Matchmaker implements DurableObject {
       if (conn === ws) return id;
     }
     return null;
+  }
+
+  private broadcastQueueStatus(bracket: Bracket): void {
+    const queue = this.queues.get(bracket)!;
+    const players = queue.map((e) => ({
+      id: e.playerId,
+      display_name: e.displayName,
+      elo: e.elo,
+    }));
+    const msg = JSON.stringify({
+      type: 'queue_status',
+      bracket,
+      playersInBracket: queue.length,
+      players,
+    });
+    // Send to all connected players in this bracket
+    for (const [playerId, ws] of this.connections) {
+      if (this.playerBrackets.get(playerId) === bracket) {
+        try { ws.send(msg); } catch { /* closing */ }
+      }
+    }
   }
 
   private scheduleAlarm(): void {

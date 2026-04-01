@@ -12,19 +12,17 @@ export function Queue() {
   const { player, loading } = useAuth();
   const [inQueue, setInQueue] = useState(false);
   const [bracket, setBracket] = useState('');
-  const [playersInBracket, setPlayersInBracket] = useState(0);
+  const [queuePlayers, setQueuePlayers] = useState<Array<{ id: string; display_name: string; elo: number }>>([]);
   const [waitTime, setWaitTime] = useState(0);
 
   const handleMessage = useCallback(
     (data: unknown) => {
-      const msg = data as ServerMessage | { type: string; bracket?: string; playersInBracket?: number };
+      const msg = data as Record<string, unknown>;
       if (msg.type === 'queue_status') {
-        const qs = msg as { bracket: string; playersInBracket: number };
-        setBracket(qs.bracket);
-        setPlayersInBracket(qs.playersInBracket);
+        setBracket(msg.bracket as string);
+        setQueuePlayers((msg.players as Array<{ id: string; display_name: string; elo: number }>) || []);
       } else if (msg.type === 'match_found') {
-        const mf = msg as { roomId: string };
-        navigate(`/match/${mf.roomId}`);
+        navigate(`/match/${msg.roomId as string}`);
       }
     },
     [navigate],
@@ -111,8 +109,21 @@ export function Queue() {
             Bracket: <strong>{bracket.charAt(0).toUpperCase() + bracket.slice(1)}</strong>
           </p>
         )}
-        <p style={styles.detail}>{playersInBracket} players in queue</p>
+        <p style={styles.detail}>{queuePlayers.length} player{queuePlayers.length !== 1 ? 's' : ''} in queue</p>
+        {queuePlayers.length > 0 && (
+          <div style={styles.playerList}>
+            {queuePlayers.map((p) => (
+              <div key={p.id} style={styles.playerRow}>
+                <span style={styles.playerName}>{p.display_name}</span>
+                <span style={styles.playerElo}>{p.elo}</span>
+              </div>
+            ))}
+          </div>
+        )}
         <p style={styles.detail}>Waiting: {waitTime}s</p>
+        {queuePlayers.length < 4 && (
+          <p style={styles.detail}>Need {4 - queuePlayers.length} more to start</p>
+        )}
         {waitTime > 15 && (
           <p style={{ color: '#f39c12', fontSize: '13px' }}>
             Expanding search to nearby brackets...
@@ -205,4 +216,28 @@ const styles: Record<string, React.CSSProperties> = {
     animation: 'spin 1s linear infinite',
   },
   detail: { color: '#888', fontSize: '14px' },
+  playerList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    width: '100%',
+  },
+  playerRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '6px 12px',
+    background: '#1a1a2e',
+    borderRadius: '6px',
+    fontSize: '13px',
+  },
+  playerName: {
+    color: '#e0e0e0',
+    fontWeight: 'bold',
+  },
+  playerElo: {
+    color: '#888',
+    fontFamily: 'monospace',
+    fontSize: '12px',
+  },
 };
