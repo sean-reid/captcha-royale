@@ -12,7 +12,7 @@ export function Header() {
         <span style={styles.logoText}>CAPTCHA</span>
         <span style={styles.logoAccent}>Royale</span>
       </div>
-      {player && (
+      {player ? (
         <div style={styles.userInfo}>
           <span style={{ color: getBracketColor(player.elo) }}>
             {getEloBracket(player.elo)}
@@ -23,6 +23,10 @@ export function Header() {
             Logout
           </button>
         </div>
+      ) : (
+        <button onClick={() => navigate('/login')} style={styles.signInBtn}>
+          Sign In
+        </button>
       )}
     </header>
   );
@@ -68,5 +72,16 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '4px',
     cursor: 'pointer',
     fontSize: '12px',
+  },
+  signInBtn: {
+    background: 'linear-gradient(135deg, #ff6b6b, #ee5a24)',
+    border: 'none',
+    borderRadius: '6px',
+    color: '#fff',
+    padding: '8px 20px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    fontFamily: 'inherit',
   },
 };
