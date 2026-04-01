@@ -229,8 +229,7 @@ impl CaptchaGenerator for SequenceGenerator {
         let seq_offset_x = (width - seq_width) / 2.0 + gap;
         let row1_y = 35.0 + gap + cell_size / 2.0;
 
-        for i in 0..seq_len {
-            let item = &items[i];
+        for (i, item) in items.iter().enumerate().take(seq_len) {
             let cx = seq_offset_x + i as f32 * (cell_size + gap) + cell_size / 2.0;
             let fill = hsl_to_css(item.hue, 70.0, 55.0);
 

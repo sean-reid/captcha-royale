@@ -18,7 +18,7 @@ struct HslColor {
 }
 
 impl HslColor {
-    fn to_rgb(&self) -> (u8, u8, u8) {
+    fn to_rgb(self) -> (u8, u8, u8) {
         let h = self.h / 360.0;
         let s = self.s / 100.0;
         let l = self.l / 100.0;
@@ -42,7 +42,7 @@ impl HslColor {
         ((r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8)
     }
 
-    fn css(&self) -> String {
+    fn css(self) -> String {
         let (r, g, b) = self.to_rgb();
         format!("rgb({r},{g},{b})")
     }
