@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/Button';
 import { getEloBracket, getBracketColor } from '../lib/elo';
 import { wsUrl } from '../lib/config';
@@ -8,6 +9,7 @@ import type { ServerMessage } from '../types/match';
 
 export function Queue() {
   const navigate = useNavigate();
+  const { player, loading } = useAuth();
   const [inQueue, setInQueue] = useState(false);
   const [bracket, setBracket] = useState('');
   const [playersInBracket, setPlayersInBracket] = useState(0);
@@ -36,6 +38,7 @@ export function Queue() {
   });
 
   const joinQueue = () => {
+    if (inQueue) return; // prevent double-queue
     setInQueue(true);
     connect();
   };
@@ -47,35 +50,53 @@ export function Queue() {
   };
 
   // Track wait time
+  // Track wait time
   useEffect(() => {
     if (!inQueue) return;
     const interval = setInterval(() => setWaitTime((t) => t + 1), 1000);
     return () => clearInterval(interval);
   }, [inQueue]);
 
+  // Disconnect on unmount
+  useEffect(() => {
+    return () => { disconnect(); };
+  }, [disconnect]);
+
   if (!inQueue) {
     return (
       <div style={styles.container}>
         <h1 style={styles.title}>Matchmaking</h1>
-        <p style={styles.subtitle}>Find a match against other players</p>
-        <div style={styles.modes}>
-          <ModeCard
-            name="Battle Royale"
-            description="4-16 players. Wrong answer = eliminated. Last one standing wins."
-            players="4-16"
-            onSelect={joinQueue}
-          />
-          <ModeCard
-            name="Sprint"
-            description="2-8 players. Solve 10 CAPTCHAs as fast as possible. Pure speed."
-            players="2-8"
-            onSelect={joinQueue}
-            disabled
-          />
-        </div>
-        <Button variant="secondary" onClick={() => navigate('/play')}>
-          Or Play Endless Mode (Solo)
-        </Button>
+        {!loading && !player ? (
+          <>
+            <p style={styles.subtitle}>Sign in to play multiplayer</p>
+            <Button onClick={() => navigate('/login')}>Sign In</Button>
+            <Button variant="secondary" onClick={() => navigate('/play')} style={{ marginTop: '8px' }}>
+              Or Play Endless Mode (Solo)
+            </Button>
+          </>
+        ) : (
+          <>
+            <p style={styles.subtitle}>Find a match against other players</p>
+            <div style={styles.modes}>
+              <ModeCard
+                name="Battle Royale"
+                description="4-16 players. Wrong answer = eliminated. Last one standing wins."
+                players="4-16"
+                onSelect={joinQueue}
+              />
+              <ModeCard
+                name="Sprint"
+                description="2-8 players. Solve 10 CAPTCHAs as fast as possible. Pure speed."
+                players="2-8"
+                onSelect={joinQueue}
+                disabled
+              />
+            </div>
+            <Button variant="secondary" onClick={() => navigate('/play')}>
+              Or Play Endless Mode (Solo)
+            </Button>
+          </>
+        )}
       </div>
     );
   }
