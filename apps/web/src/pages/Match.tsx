@@ -54,9 +54,11 @@ export function Match() {
   });
 
   useEffect(() => {
-    if (roomId) connect();
+    if (roomId && roomWsUrl) {
+      connect();
+    }
     return () => disconnect();
-  }, [roomId]);
+  }, [roomId, roomWsUrl, connect, disconnect]);
 
   const handleSubmit = useCallback(
     (answer: PlayerAnswer) => {

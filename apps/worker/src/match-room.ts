@@ -108,7 +108,7 @@ export class MatchRoom implements DurableObject {
     return new Response('OK');
   }
 
-  private handleWebSocket(request: Request, url: URL): Response {
+  private async handleWebSocket(request: Request, url: URL): Promise<Response> {
     const playerId = url.searchParams.get('playerId');
     if (!playerId) {
       return new Response('Missing playerId', { status: 400 });
@@ -117,6 +117,13 @@ export class MatchRoom implements DurableObject {
     if (this.players.size >= MAX_PLAYERS && !this.players.has(playerId)) {
       return new Response('Room full', { status: 400 });
     }
+
+    // Fetch player info from D1 before upgrading
+    const playerRow = await this.env.DB.prepare(
+      'SELECT display_name, elo, level FROM players WHERE id = ?',
+    )
+      .bind(playerId)
+      .first<{ display_name: string; elo: number; level: number }>();
 
     const pair = new WebSocketPair();
     const [client, server] = [pair[0], pair[1]];
@@ -137,20 +144,14 @@ export class MatchRoom implements DurableObject {
     if (!this.players.has(playerId)) {
       this.players.set(playerId, {
         playerId,
-        displayName: `Player ${this.players.size + 1}`,
-        elo: 1000,
-        level: 1,
+        displayName: playerRow?.display_name ?? `Player ${this.players.size + 1}`,
+        elo: playerRow?.elo ?? 1000,
+        level: playerRow?.level ?? 1,
         alive: true,
         score: 0,
         roundsSurvived: 0,
         solveTimes: [],
       });
-    } else {
-      // Reconnecting — mark alive again if within grace period
-      const player = this.players.get(playerId)!;
-      if (!player.alive) {
-        // Can't resurrect after elimination
-      }
     }
 
     this.broadcastLobbyUpdate();
