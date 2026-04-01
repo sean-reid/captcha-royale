@@ -9,13 +9,33 @@ export async function validateSession(
   request: Request,
   env: Env,
 ): Promise<Session | null> {
+  // Try Authorization: Bearer header first (cross-origin)
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.slice(7);
+    return validateToken(token, env);
+  }
+
+  // Fall back to cookie (same-origin / local dev)
   const cookie = request.headers.get('Cookie');
-  if (!cookie) return null;
+  if (cookie) {
+    const match = cookie.match(/session=([^;]+)/);
+    if (match) {
+      return validateToken(match[1], env);
+    }
+  }
 
-  const match = cookie.match(/session=([^;]+)/);
-  if (!match) return null;
+  // Try query param (WebSocket upgrade can't set headers)
+  const url = new URL(request.url);
+  const tokenParam = url.searchParams.get('token');
+  if (tokenParam) {
+    return validateToken(tokenParam, env);
+  }
 
-  const token = match[1];
+  return null;
+}
+
+async function validateToken(token: string, env: Env): Promise<Session | null> {
   const data = await env.KV.get(`session:${token}`, 'json');
   if (!data) return null;
 
@@ -50,19 +70,16 @@ export async function deleteSession(
   env: Env,
   request: Request,
 ): Promise<void> {
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    await env.KV.delete(`session:${authHeader.slice(7)}`);
+    return;
+  }
+
   const cookie = request.headers.get('Cookie');
   if (!cookie) return;
-
   const match = cookie.match(/session=([^;]+)/);
-  if (!match) return;
-
-  await env.KV.delete(`session:${match[1]}`);
-}
-
-export function sessionCookie(token: string, maxAge = 7 * 24 * 60 * 60): string {
-  return `session=${token}; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=${maxAge}`;
-}
-
-export function clearSessionCookie(): string {
-  return 'session=; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=0';
+  if (match) {
+    await env.KV.delete(`session:${match[1]}`);
+  }
 }

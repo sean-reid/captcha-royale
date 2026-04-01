@@ -1,5 +1,5 @@
 import type { Env } from './index';
-import { createSession, deleteSession, sessionCookie, clearSessionCookie, validateSession } from './lib/session';
+import { createSession, deleteSession, validateSession } from './lib/session';
 import { createPlayer, findPlayerByOAuth, findPlayerByEmail, upsertOAuthIdentity, getPlayer } from './lib/d1';
 
 interface ProviderConfig {
@@ -57,10 +57,7 @@ export async function handleAuth(request: Request, env: Env, path: string): Prom
   if (path === '/api/auth/logout' && request.method === 'POST') {
     await deleteSession(env, request);
     return new Response(JSON.stringify({ ok: true }), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Set-Cookie': clearSessionCookie(),
-      },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -179,13 +176,12 @@ async function handleCallback(request: Request, env: Env): Promise<Response> {
   // Create session
   const sessionToken = await createSession(env, playerId);
 
-  // Redirect to frontend app
+  // Redirect to frontend app with token in URL fragment (not sent to server)
   const frontendUrl = env.FRONTEND_URL || '/';
   return new Response(null, {
     status: 302,
     headers: {
-      Location: frontendUrl,
-      'Set-Cookie': sessionCookie(sessionToken),
+      Location: `${frontendUrl}#token=${sessionToken}`,
     },
   });
 }

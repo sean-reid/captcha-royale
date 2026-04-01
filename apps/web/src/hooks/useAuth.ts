@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../lib/api';
 import { apiUrl } from '../lib/config';
+import { getToken, clearToken } from '../lib/session';
 import type { PlayerProfile } from '../types/player';
 
 export function useAuth() {
@@ -8,20 +9,28 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Only try to fetch profile if we have a token
+    if (!getToken()) {
+      setLoading(false);
+      return;
+    }
     api.auth
       .me()
       .then((data) => setPlayer(data as PlayerProfile))
-      .catch(() => setPlayer(null))
+      .catch(() => {
+        clearToken();
+        setPlayer(null);
+      })
       .finally(() => setLoading(false));
   }, []);
 
   const logout = useCallback(async () => {
-    await api.auth.logout();
+    try { await api.auth.logout(); } catch { /* ignore */ }
+    clearToken();
     setPlayer(null);
   }, []);
 
   const login = useCallback((provider: 'google' | 'discord' | 'github') => {
-    // Navigate directly to the worker — OAuth redirect must hit the worker origin
     window.location.href = apiUrl(`/auth/${provider}`);
   }, []);
 

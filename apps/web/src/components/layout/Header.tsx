@@ -20,7 +20,7 @@ export function Header() {
           <span style={styles.elo}>{player.elo} ELO</span>
           <span style={styles.name}>{player.display_name}</span>
           <button onClick={logout} style={styles.logoutBtn}>
-            Logout
+            Log Out
           </button>
         </div>
       ) : (
