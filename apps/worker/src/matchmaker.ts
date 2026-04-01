@@ -73,6 +73,19 @@ export class Matchmaker implements DurableObject {
     // Read mode from query param
     const mode = (url.searchParams.get('mode') || 'battle_royale') as GameMode;
 
+    // Remove any existing queue entry for this player (prevent double-queue)
+    for (const [, q] of this.queues) {
+      const idx = q.findIndex((e) => e.playerId === playerId);
+      if (idx !== -1) q.splice(idx, 1);
+    }
+
+    // Close any existing connection for this player (second tab replaces first)
+    const existingWs = this.connections.get(playerId);
+    if (existingWs) {
+      try { existingWs.send(JSON.stringify({ type: 'error', code: 'duplicate', message: 'Connected from another tab' })); } catch {}
+      try { existingWs.close(); } catch {}
+    }
+
     // Add to queue
     const queue = this.queues.get(bracket)!;
     queue.push({ playerId, displayName, elo, mode, joinedAt: Date.now() });
