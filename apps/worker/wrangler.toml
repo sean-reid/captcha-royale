@@ -1,0 +1,22 @@
+name = "captcha-royale-worker"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[durable_objects]
+bindings = [
+  { name = "MATCH_ROOM", class_name = "MatchRoom" },
+  { name = "MATCHMAKER", class_name = "Matchmaker" }
+]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["MatchRoom", "Matchmaker"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "captcha-royale-db"
+database_id = "384fd3db-2048-4300-9f9a-e1d68d2837f0"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "91632d7a4f4a43d9a5652e36ce2944d7"

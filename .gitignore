@@ -1,0 +1,10 @@
+node_modules/
+dist/
+pkg/
+target/
+.turbo/
+.wrangler/
+.env
+.env.local
+*.wasm
+!packages/captcha-engine/pkg/
