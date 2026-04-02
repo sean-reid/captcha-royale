@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useMatchState } from '../hooks/useMatchState';
 import { useCaptchaEngine } from '../hooks/useCaptchaEngine';
+import { useAuth } from '../hooks/useAuth';
 import { wsUrl } from '../lib/config';
 import { CaptchaRenderer } from '../components/captcha/CaptchaRenderer';
 import { Timer } from '../components/match/Timer';
@@ -16,6 +17,7 @@ import type { ServerMessage } from '../types/match';
 export function Match() {
   const { id: roomId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { refresh } = useAuth();
   const { ready, generate } = useCaptchaEngine();
   const { state, handleMessage, reset } = useMatchState();
   const [currentCaptcha, setCurrentCaptcha] = useState<CaptchaInstance | null>(null);
@@ -26,9 +28,11 @@ export function Match() {
   const readyRef = useRef(ready);
   const generateRef = useRef(generate);
   const handleMessageRef = useRef(handleMessage);
+  const refreshRef = useRef(refresh);
   readyRef.current = ready;
   generateRef.current = generate;
   handleMessageRef.current = handleMessage;
+  refreshRef.current = refresh;
 
   const onServerMessage = useCallback(
     (data: unknown) => {
@@ -53,6 +57,10 @@ export function Match() {
 
       if (msg.type === 'round_end' || msg.type === 'match_end') {
         setCurrentCaptcha(null);
+      }
+
+      if (msg.type === 'match_end') {
+        refreshRef.current();
       }
     },
     [], // stable — uses refs internally
@@ -122,6 +130,9 @@ export function Match() {
           ))}
         </div>
         <p style={styles.waiting}>Waiting for more players...</p>
+        <Button variant="secondary" onClick={() => { disconnect(); navigate('/queue'); }} style={{ marginTop: '16px' }}>
+          Leave Lobby
+        </Button>
       </div>
     );
   }

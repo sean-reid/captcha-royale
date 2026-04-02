@@ -30,9 +30,17 @@ export function useAuth() {
     setPlayer(null);
   }, []);
 
+  const refresh = useCallback(async () => {
+    if (!getToken()) return;
+    try {
+      const data = await api.auth.me();
+      setPlayer(data as PlayerProfile);
+    } catch { /* ignore */ }
+  }, []);
+
   const login = useCallback((provider: 'google' | 'discord' | 'github') => {
     window.location.href = apiUrl(`/auth/${provider}`);
   }, []);
 
-  return { player, loading, login, logout };
+  return { player, loading, login, logout, refresh };
 }
