@@ -15,6 +15,7 @@ async function fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(apiUrl(path), {
     ...options,
     headers,
+    cache: 'no-store',
   });
   if (!res.ok) {
     throw new Error(`API error: ${res.status} ${res.statusText}`);

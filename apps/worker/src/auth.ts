@@ -50,7 +50,12 @@ export async function handleAuth(request: Request, env: Env, path: string): Prom
     if (!session) return new Response('Unauthorized', { status: 401 });
     const player = await getPlayer(env, session.playerId);
     if (!player) return new Response('Not Found', { status: 404 });
-    return Response.json(player);
+    return new Response(JSON.stringify(player), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+      },
+    });
   }
 
   // POST /api/auth/logout
