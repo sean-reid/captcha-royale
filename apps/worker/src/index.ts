@@ -72,14 +72,11 @@ export default {
           .first<{ id: string; display_name: string; elo: number }>();
 
         if (!player) {
-          console.log('[Queue] player not found for session playerId:', playerId, '— returning 410');
           return new Response(JSON.stringify({ error: 'player_not_found' }), {
             status: 410,
             headers: { 'Content-Type': 'application/json' },
           });
         }
-
-        console.log('[Queue] player found:', player.id, player.display_name);
         const matchmakerId = env.MATCHMAKER.idFromName('global');
         const matchmaker = env.MATCHMAKER.get(matchmakerId);
         const newUrl = new URL(request.url);

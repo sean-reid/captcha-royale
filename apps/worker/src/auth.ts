@@ -171,24 +171,20 @@ async function handleCallback(request: Request, env: Env): Promise<Response> {
 
   // Extract provider ID, name, email, avatar
   const { providerId, displayName, email, avatarUrl } = extractProfile(provider, profile);
-  console.log('[Auth] profile extracted:', { provider, providerId, displayName, email });
 
   try {
     // Check if this OAuth identity already exists
     let playerId = await findPlayerByOAuth(env, provider, providerId);
-    console.log('[Auth] findPlayerByOAuth:', playerId);
 
     if (!playerId) {
       // Try to link by email
       if (email) {
         playerId = await findPlayerByEmail(env, email);
-        console.log('[Auth] findPlayerByEmail:', playerId);
       }
 
       if (!playerId) {
         // Create new player
         playerId = crypto.randomUUID();
-        console.log('[Auth] creating new player:', playerId, displayName);
         await createPlayer(env, { id: playerId, display_name: displayName, avatar_url: avatarUrl });
       }
 
@@ -202,7 +198,6 @@ async function handleCallback(request: Request, env: Env): Promise<Response> {
     }
 
     // Create session
-    console.log('[Auth] creating session for playerId:', playerId);
     const sessionToken = await createSession(env, playerId);
 
     // Redirect to frontend app with token in URL fragment (not sent to server)
