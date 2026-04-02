@@ -53,12 +53,20 @@ export function Match() {
     onMessage: onServerMessage,
   });
 
+  // Connect once when roomId is available
+  const connectedRef = useRef(false);
   useEffect(() => {
-    if (roomId && roomWsUrl) {
+    if (roomId && !connectedRef.current) {
+      connectedRef.current = true;
       connect();
     }
-    return () => disconnect();
-  }, [roomId, roomWsUrl, connect, disconnect]);
+    return () => {
+      if (connectedRef.current) {
+        disconnect();
+        connectedRef.current = false;
+      }
+    };
+  }, [roomId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = useCallback(
     (answer: PlayerAnswer) => {
