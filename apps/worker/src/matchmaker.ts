@@ -52,15 +52,12 @@ export class Matchmaker implements DurableObject {
       return new Response('Missing playerId', { status: 400 });
     }
 
-    // Get player info from D1
-    const player = await this.env.DB.prepare(
-      'SELECT elo, display_name FROM players WHERE id = ?',
-    )
-      .bind(playerId)
-      .first<{ elo: number; display_name: string }>();
+    // Use player info passed from the router (avoids DO→D1 query issues)
+    const eloParam = url.searchParams.get('elo');
+    const nameParam = url.searchParams.get('displayName');
 
-    const elo = player?.elo ?? 1000;
-    const displayName = player?.display_name ?? 'Player';
+    const elo = eloParam ? parseInt(eloParam, 10) : 1000;
+    const displayName = nameParam || 'Player';
     const bracket = this.getBracket(elo);
 
     const pair = new WebSocketPair();

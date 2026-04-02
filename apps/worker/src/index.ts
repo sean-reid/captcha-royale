@@ -64,10 +64,18 @@ export default {
         const session = await validateSession(request, env);
         if (!session) return new Response('Unauthorized', { status: 401 });
 
+        const player = await env.DB.prepare('SELECT display_name, elo FROM players WHERE id = ?')
+          .bind(session.playerId)
+          .first<{ display_name: string; elo: number }>();
+
         const matchmakerId = env.MATCHMAKER.idFromName('global');
         const matchmaker = env.MATCHMAKER.get(matchmakerId);
         const newUrl = new URL(request.url);
         newUrl.searchParams.set('playerId', session.playerId);
+        if (player) {
+          newUrl.searchParams.set('displayName', player.display_name);
+          newUrl.searchParams.set('elo', String(player.elo));
+        }
         return matchmaker.fetch(new Request(newUrl.toString(), request));
       }
       // WebSocket upgrade for match room
