@@ -1,74 +1,70 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/Button';
-import { getEloBracket, getBracketColor } from '../lib/elo';
+import { getBracketColor } from '../lib/elo';
 import { wsUrl } from '../lib/config';
-import type { ServerMessage } from '../types/match';
 
 export function Queue() {
   const navigate = useNavigate();
   const { player, loading } = useAuth();
-  const [inQueue, setInQueue] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<'battle_royale' | 'sprint'>('battle_royale');
+  const [selectedMode, setSelectedMode] = useState<'battle_royale' | 'sprint' | null>(null);
   const [bracket, setBracket] = useState('');
   const [queuePlayers, setQueuePlayers] = useState<Array<{ id: string; display_name: string; elo: number }>>([]);
   const [waitTime, setWaitTime] = useState(0);
+  const wsRef = useRef<WebSocket | null>(null);
 
-  const handleMessage = useCallback(
-    (data: unknown) => {
-      const msg = data as Record<string, unknown>;
-      if (msg.type === 'queue_status') {
-        setBracket(msg.bracket as string);
-        setQueuePlayers((msg.players as Array<{ id: string; display_name: string; elo: number }>) || []);
-      } else if (msg.type === 'match_found') {
-        navigate(`/match/${msg.roomId as string}`);
-      }
+  const handleWsMessage = useCallback(
+    (event: MessageEvent) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'queue_status') {
+          setBracket(msg.bracket as string);
+          setQueuePlayers(msg.players || []);
+        } else if (msg.type === 'match_found') {
+          navigate(`/match/${msg.roomId}`);
+        }
+      } catch { /* ignore */ }
     },
     [navigate],
   );
 
-  const queueWsUrl = wsUrl(`/match/queue?mode=${selectedMode}`);
-
-  const { connected, connect, disconnect } = useWebSocket({
-    url: queueWsUrl,
-    onMessage: handleMessage,
-  });
-
-  const joinQueue = (mode: 'battle_royale' | 'sprint') => {
-    if (inQueue) return;
+  const joinQueue = useCallback((mode: 'battle_royale' | 'sprint') => {
+    if (wsRef.current) return; // already queued
     setSelectedMode(mode);
-    setInQueue(true);
-  };
 
-  // Connect when inQueue becomes true (after selectedMode is set)
-  useEffect(() => {
-    if (inQueue) {
-      connect();
+    const url = wsUrl(`/match/queue?mode=${mode}`);
+    const ws = new WebSocket(url);
+    wsRef.current = ws;
+
+    ws.onmessage = (e) => handleWsMessage(e);
+    ws.onclose = () => { wsRef.current = null; };
+    ws.onerror = () => { ws.close(); };
+  }, [handleWsMessage]);
+
+  const leaveQueue = useCallback(() => {
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
     }
-  }, [inQueue]);
-
-  const leaveQueue = () => {
-    setInQueue(false);
-    disconnect();
+    setSelectedMode(null);
+    setQueuePlayers([]);
     setWaitTime(0);
-  };
+  }, []);
 
-  // Track wait time
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => { wsRef.current?.close(); };
+  }, []);
+
   // Track wait time
   useEffect(() => {
-    if (!inQueue) return;
+    if (!selectedMode) return;
     const interval = setInterval(() => setWaitTime((t) => t + 1), 1000);
     return () => clearInterval(interval);
-  }, [inQueue]);
+  }, [selectedMode]);
 
-  // Disconnect on unmount
-  useEffect(() => {
-    return () => { disconnect(); };
-  }, [disconnect]);
-
-  if (!inQueue) {
+  if (!selectedMode) {
     return (
       <div style={styles.container}>
         <h1 style={styles.title}>Matchmaking</h1>
