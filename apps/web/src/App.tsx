@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './hooks/AuthContext';
 import { DesktopGate } from './components/DesktopGate';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
@@ -15,6 +16,7 @@ import { Playtest } from './pages/Playtest';
 export function App() {
   return (
     <DesktopGate>
+      <AuthProvider>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
         <div style={styles.layout}>
           <Header />
@@ -37,6 +39,7 @@ export function App() {
           <Footer />
         </div>
       </BrowserRouter>
+      </AuthProvider>
     </DesktopGate>
   );
 }
