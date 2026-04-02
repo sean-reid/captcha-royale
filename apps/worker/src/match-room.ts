@@ -182,6 +182,11 @@ export class MatchRoom implements DurableObject {
           break;
         case 'forfeit':
           this.eliminatePlayer(playerId, 'forfeit');
+          // Forfeit ends the match immediately
+          if (this.roomState.phase !== 'ended' && !this.roomState.ended) {
+            this.roomState.phase = 'ended';
+            this.state.storage.setAlarm(Date.now() + 500);
+          }
           break;
         case 'start':
           // For private rooms, host can start

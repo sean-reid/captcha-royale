@@ -7,7 +7,10 @@ import { wsUrl } from '../lib/config';
 
 export function Queue() {
   const navigate = useNavigate();
-  const { player, loading } = useAuth();
+  const { player, loading, refresh } = useAuth();
+
+  // Refresh profile on mount so ELO is current
+  useEffect(() => { refresh(); }, []);
   const [selectedMode, setSelectedMode] = useState<'battle_royale' | 'sprint' | null>(null);
   const [bracket, setBracket] = useState('');
   const [queuePlayers, setQueuePlayers] = useState<Array<{ id: string; display_name: string; elo: number }>>([]);
