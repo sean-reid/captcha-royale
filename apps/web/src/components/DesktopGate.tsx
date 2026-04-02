@@ -1,17 +1,25 @@
 import { useState, useEffect, type ReactNode } from 'react';
 
-const MIN_WIDTH = 1024;
+function isMobileDevice(): boolean {
+  // Check for touch-only device (no fine pointer = no mouse)
+  if (window.matchMedia('(pointer: coarse)').matches &&
+      !window.matchMedia('(pointer: fine)').matches) {
+    return true;
+  }
+  // Fallback: check user agent for common mobile strings
+  return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent,
+  );
+}
 
 export function DesktopGate({ children }: { children: ReactNode }) {
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= MIN_WIDTH);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const handleResize = () => setIsDesktop(window.innerWidth >= MIN_WIDTH);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    setIsMobile(isMobileDevice());
   }, []);
 
-  if (!isDesktop) {
+  if (isMobile) {
     return (
       <div style={styles.gate}>
         <h1 style={styles.title}>CAPTCHA Royale</h1>
@@ -19,7 +27,7 @@ export function DesktopGate({ children }: { children: ReactNode }) {
           This game requires a desktop browser with a keyboard and mouse.
         </p>
         <p style={styles.sub}>
-          Please visit on a desktop with a window at least 1024px wide.
+          Please visit on a desktop computer to play.
         </p>
       </div>
     );
