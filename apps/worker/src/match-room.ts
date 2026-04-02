@@ -12,10 +12,13 @@ interface PlayerState {
   solveTimes: number[];
 }
 
+type RoomPhase = 'waiting' | 'countdown' | 'playing' | 'between_rounds' | 'ended';
+
 interface RoomState {
   matchId: string;
   secret: string;
   round: number;
+  phase: RoomPhase;
   mode: 'battle_royale' | 'sprint' | 'endless';
   isPrivate: boolean;
   roomCode: string | null;
@@ -42,6 +45,7 @@ export class MatchRoom implements DurableObject {
     matchId: '',
     secret: '',
     round: 0,
+    phase: 'waiting',
     mode: 'battle_royale',
     isPrivate: false,
     roomCode: null,
@@ -227,33 +231,39 @@ export class MatchRoom implements DurableObject {
   private startCountdown(): void {
     this.roomState.started = true;
     this.roomState.startedAt = new Date().toISOString();
+    this.roomState.phase = 'countdown';
 
-    // Broadcast countdown
     this.broadcast({
       type: 'lobby_update',
       players: this.getPlayerInfos(),
       countdown: COUNTDOWN_SECONDS,
     });
 
-    // Start first round after countdown
     this.state.storage.setAlarm(Date.now() + COUNTDOWN_SECONDS * 1000);
   }
 
   async alarm(): Promise<void> {
-    if (this.roomState.ended) return;
-
-    // Check if it's a timeout alarm for current round
-    if (this.roomState.round > 0) {
-      this.handleRoundTimeout();
-      return;
+    switch (this.roomState.phase) {
+      case 'countdown':
+        this.startNextRound();
+        break;
+      case 'playing':
+        this.handleRoundTimeout();
+        break;
+      case 'between_rounds':
+        this.startNextRound();
+        break;
+      case 'ended':
+        await this.endMatch();
+        break;
+      default:
+        break;
     }
-
-    // Start next round
-    this.startNextRound();
   }
 
   private startNextRound(): void {
     this.roomState.round++;
+    this.roomState.phase = 'playing';
     this.roomState.roundAnswers = new Map();
     this.roomState.roundStartTime = Date.now();
 
@@ -312,6 +322,7 @@ export class MatchRoom implements DurableObject {
     answer: unknown;
     client_time_ms: number;
   }): void {
+    if (this.roomState.phase !== 'playing') return;
     const player = this.players.get(playerId);
     if (!player || !player.alive) return;
 
@@ -384,6 +395,7 @@ export class MatchRoom implements DurableObject {
   }
 
   private endRound(): void {
+    this.roomState.phase = 'between_rounds';
     const standings = this.getStandings();
     this.broadcast({ type: 'round_end', standings });
 
@@ -394,16 +406,12 @@ export class MatchRoom implements DurableObject {
       : alivePlayers.length <= 1 || this.roomState.round >= this.roomState.maxRounds;
 
     if (shouldEnd) {
-      setTimeout(() => this.endMatch(), 2000);
+      this.roomState.phase = 'ended';
+      // Brief delay before showing results
+      this.state.storage.setAlarm(Date.now() + 2000);
     } else {
-      // Reset round counter for alarm logic
-      const currentRound = this.roomState.round;
-      this.roomState.round = 0;
-      // Start next round after brief pause
-      setTimeout(() => {
-        this.roomState.round = currentRound;
-        this.startNextRound();
-      }, 3000);
+      // Schedule next round after a brief pause
+      this.state.storage.setAlarm(Date.now() + 3000);
     }
   }
 
@@ -419,10 +427,13 @@ export class MatchRoom implements DurableObject {
       reason,
     });
 
-    // Check if match should end
-    const alivePlayers = this.getAlivePlayers();
-    if (alivePlayers.length <= 1 && this.roomState.started) {
-      setTimeout(() => this.endMatch(), 1000);
+    // In Battle Royale, check if match should end (1 or fewer alive)
+    if (this.roomState.mode !== 'sprint') {
+      const alivePlayers = this.getAlivePlayers();
+      if (alivePlayers.length <= 1 && this.roomState.started && this.roomState.phase === 'playing') {
+        this.roomState.phase = 'ended';
+        this.state.storage.setAlarm(Date.now() + 1000);
+      }
     }
   }
 

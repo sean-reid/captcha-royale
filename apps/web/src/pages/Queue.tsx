@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/Button';
-import { getBracketColor } from '../lib/elo';
+import { getBracketColorByName } from '../lib/elo';
 import { wsUrl } from '../lib/config';
 
 export function Queue() {
@@ -110,7 +110,7 @@ export function Queue() {
       <div style={styles.queueInfo}>
         <div style={styles.spinner} />
         {bracket && (
-          <p style={{ color: getBracketColor(1000), fontSize: '16px' }}>
+          <p style={{ color: getBracketColorByName(bracket), fontSize: '16px' }}>
             Bracket: <strong>{bracket.charAt(0).toUpperCase() + bracket.slice(1)}</strong>
           </p>
         )}

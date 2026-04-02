@@ -14,6 +14,18 @@ export function getBracketColor(elo: number): string {
   return '#b9f2ff';
 }
 
+const BRACKET_COLORS: Record<string, string> = {
+  bronze: '#cd7f32',
+  silver: '#c0c0c0',
+  gold: '#ffd700',
+  platinum: '#e5e4e2',
+  diamond: '#b9f2ff',
+};
+
+export function getBracketColorByName(name: string): string {
+  return BRACKET_COLORS[name.toLowerCase()] || '#888';
+}
+
 export function xpForLevel(level: number): number {
   return Math.floor(100 * Math.pow(level, 1.5));
 }
