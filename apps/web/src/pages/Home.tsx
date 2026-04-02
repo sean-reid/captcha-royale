@@ -23,6 +23,11 @@ export function Home() {
         <Button size="lg" variant="secondary" onClick={() => navigate('/queue')}>
           Multiplayer
         </Button>
+        {import.meta.env.DEV && (
+          <Button size="sm" variant="secondary" onClick={() => navigate('/playtest')}>
+            Playtest CAPTCHAs
+          </Button>
+        )}
       </div>
 
       <div style={styles.features}>

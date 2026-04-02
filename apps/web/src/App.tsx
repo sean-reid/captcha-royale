@@ -10,6 +10,7 @@ import { Results } from './pages/Results';
 import { Profile } from './pages/Profile';
 import { Leaderboard } from './pages/Leaderboard';
 import { Login } from './pages/Login';
+import { Playtest } from './pages/Playtest';
 
 export function App() {
   return (
@@ -28,6 +29,9 @@ export function App() {
               <Route path="/profile/:id" element={<Profile />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/login" element={<Login />} />
+              {import.meta.env.DEV && (
+                <Route path="/playtest" element={<Playtest />} />
+              )}
             </Routes>
           </main>
           <Footer />

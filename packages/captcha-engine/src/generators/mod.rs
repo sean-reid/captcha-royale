@@ -4,6 +4,12 @@ pub mod grid;
 pub mod rotation;
 pub mod color;
 pub mod sequence;
+pub mod metamorphic;
+pub mod cascade;
+pub mod oddity;
+pub mod spatial;
+pub mod multistep;
+pub mod typography;
 
 use rand_chacha::ChaCha8Rng;
 
@@ -24,6 +30,12 @@ pub fn get_generator(captcha_type: CaptchaType) -> Box<dyn CaptchaGenerator> {
         CaptchaType::RotatedObject => Box::new(rotation::RotationGenerator),
         CaptchaType::ColorPerception => Box::new(color::ColorGenerator),
         CaptchaType::SequenceCompletion => Box::new(sequence::SequenceGenerator),
+        CaptchaType::SemanticOddity => Box::new(oddity::OddityGenerator),
+        CaptchaType::MetamorphicCaptcha => Box::new(metamorphic::MetamorphicGenerator),
+        CaptchaType::TimePressureCascade => Box::new(cascade::CascadeGenerator),
+        CaptchaType::SpatialReasoning => Box::new(spatial::SpatialGenerator),
+        CaptchaType::MultiStepVerification => Box::new(multistep::MultiStepGenerator),
+        CaptchaType::AdversarialTypography => Box::new(typography::TypographyGenerator),
         // TODO: implement remaining generators
         _ => Box::new(text::TextGenerator), // fallback for now
     }
