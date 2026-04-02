@@ -22,28 +22,40 @@ export function Match() {
   const [answered, setAnswered] = useState(false);
   const roundStartRef = useRef(0);
 
+  // Use refs for the message handler so the WebSocket always calls the latest version
+  const readyRef = useRef(ready);
+  const generateRef = useRef(generate);
+  const handleMessageRef = useRef(handleMessage);
+  readyRef.current = ready;
+  generateRef.current = generate;
+  handleMessageRef.current = handleMessage;
+
   const onServerMessage = useCallback(
     (data: unknown) => {
       const msg = data as ServerMessage;
-      handleMessage(msg);
+      handleMessageRef.current(msg);
 
-      if (msg.type === 'round_start' && ready) {
-        const captcha = generate(
-          BigInt(msg.seed),
-          msg.captcha_type as CaptchaType,
-          msg.difficulty.level,
-          msg.round,
-        );
-        setCurrentCaptcha(captcha);
-        setAnswered(false);
-        roundStartRef.current = Date.now();
+      if (msg.type === 'round_start' && readyRef.current) {
+        try {
+          const captcha = generateRef.current(
+            BigInt(msg.seed),
+            msg.captcha_type as CaptchaType,
+            msg.difficulty.level,
+            msg.round,
+          );
+          setCurrentCaptcha(captcha);
+          setAnswered(false);
+          roundStartRef.current = Date.now();
+        } catch (err) {
+          console.error('CAPTCHA generation failed:', err);
+        }
       }
 
       if (msg.type === 'round_end' || msg.type === 'match_end') {
         setCurrentCaptcha(null);
       }
     },
-    [handleMessage, ready, generate],
+    [], // stable — uses refs internally
   );
 
   const roomWsUrl = roomId ? wsUrl(`/match/room/${roomId}`) : '';
