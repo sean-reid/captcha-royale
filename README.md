@@ -1,5 +1,7 @@
 # CAPTCHA Royale
 
+<a href="https://www.producthunt.com/products/captcha-royale?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-captcha-royale" target="_blank" rel="noopener noreferrer"><img alt="CAPTCHA Royale - Race to solve CAPTCHAs. Last player standing wins. | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1113837&amp;theme=light&amp;t=1775100186711"></a>
+
 Competitive real-time multiplayer browser game where players race to solve procedurally generated CAPTCHAs. Up to 16 players enter a room, CAPTCHAs get progressively harder, and the last player standing wins.
 
 ## How It Works
