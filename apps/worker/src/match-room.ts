@@ -416,7 +416,7 @@ export class MatchRoom implements DurableObject {
     this.broadcast({
       type: 'player_eliminated',
       player_id: playerId,
-      reason: reason as 'wrong' | 'timeout',
+      reason,
     });
 
     // Check if match should end

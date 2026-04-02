@@ -21,7 +21,10 @@ export function EliminationFeed({ entries }: EliminationFeedProps) {
           <span style={styles.icon}>&#x2620;</span>
           <span style={styles.name}>{entry.display_name}</span>
           <span style={styles.reason}>
-            {entry.reason === 'timeout' ? 'timed out' : 'wrong answer'}
+            {entry.reason === 'timeout' ? 'timed out'
+              : entry.reason === 'forfeit' ? 'forfeited'
+              : entry.reason === 'disconnect' ? 'disconnected'
+              : 'wrong answer'}
           </span>
         </div>
       ))}

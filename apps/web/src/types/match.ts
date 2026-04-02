@@ -12,7 +12,7 @@ export type ServerMessage =
       time_limit_ms: number;
     }
   | { type: 'player_solved'; player_id: string; time_ms: number }
-  | { type: 'player_eliminated'; player_id: string; reason: 'wrong' | 'timeout' }
+  | { type: 'player_eliminated'; player_id: string; reason: 'wrong' | 'timeout' | 'forfeit' | 'disconnect' }
   | { type: 'round_end'; standings: Standing[] }
   | { type: 'match_end'; final_standings: FinalStanding[]; elo_changes: EloChange[] }
   | { type: 'match_found'; roomId: string }
