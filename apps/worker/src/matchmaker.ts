@@ -58,6 +58,7 @@ export class Matchmaker implements DurableObject {
 
     const elo = eloParam ? parseInt(eloParam, 10) : 1000;
     const displayName = nameParam || 'Player';
+    console.log('[Matchmaker] player join:', { playerId, displayName, elo, nameParam, eloParam, url: request.url });
     const bracket = this.getBracket(elo);
 
     const pair = new WebSocketPair();

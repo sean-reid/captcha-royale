@@ -9,11 +9,23 @@ export async function validateSession(
   request: Request,
   env: Env,
 ): Promise<Session | null> {
-  // Try Authorization: Bearer header first (cross-origin)
+  // For WebSocket upgrades, prefer query param token (client sets it explicitly)
+  // over cookies which may be stale cross-origin cookies
+  const isWebSocket = request.headers.get('Upgrade') === 'websocket';
+
+  // Try query param first for WebSocket requests
+  if (isWebSocket) {
+    const url = new URL(request.url);
+    const tokenParam = url.searchParams.get('token');
+    if (tokenParam) {
+      return validateToken(tokenParam, env);
+    }
+  }
+
+  // Try Authorization: Bearer header (cross-origin API calls)
   const authHeader = request.headers.get('Authorization');
   if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.slice(7);
-    return validateToken(token, env);
+    return validateToken(authHeader.slice(7), env);
   }
 
   // Fall back to cookie (same-origin / local dev)
@@ -25,11 +37,13 @@ export async function validateSession(
     }
   }
 
-  // Try query param (WebSocket upgrade can't set headers)
-  const url = new URL(request.url);
-  const tokenParam = url.searchParams.get('token');
-  if (tokenParam) {
-    return validateToken(tokenParam, env);
+  // Fall back to query param for non-WebSocket requests
+  if (!isWebSocket) {
+    const url = new URL(request.url);
+    const tokenParam = url.searchParams.get('token');
+    if (tokenParam) {
+      return validateToken(tokenParam, env);
+    }
   }
 
   return null;

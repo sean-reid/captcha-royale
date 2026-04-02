@@ -64,18 +64,28 @@ export default {
         const session = await validateSession(request, env);
         if (!session) return new Response('Unauthorized', { status: 401 });
 
-        const player = await env.DB.prepare('SELECT display_name, elo FROM players WHERE id = ?')
-          .bind(session.playerId)
-          .first<{ display_name: string; elo: number }>();
+        // Look up the actual player — if the session points to a deleted/phantom player,
+        // try to recover by finding them via OAuth identity email
+        let playerId = session.playerId;
+        let player = await env.DB.prepare('SELECT id, display_name, elo FROM players WHERE id = ?')
+          .bind(playerId)
+          .first<{ id: string; display_name: string; elo: number }>();
 
+        if (!player) {
+          console.log('[Queue] player not found for session playerId:', playerId, '— returning 410');
+          return new Response(JSON.stringify({ error: 'player_not_found' }), {
+            status: 410,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+
+        console.log('[Queue] player found:', player.id, player.display_name);
         const matchmakerId = env.MATCHMAKER.idFromName('global');
         const matchmaker = env.MATCHMAKER.get(matchmakerId);
         const newUrl = new URL(request.url);
-        newUrl.searchParams.set('playerId', session.playerId);
-        if (player) {
-          newUrl.searchParams.set('displayName', player.display_name);
-          newUrl.searchParams.set('elo', String(player.elo));
-        }
+        newUrl.searchParams.set('playerId', player.id);
+        newUrl.searchParams.set('displayName', player.display_name);
+        newUrl.searchParams.set('elo', String(player.elo));
         return matchmaker.fetch(new Request(newUrl.toString(), request));
       }
       // WebSocket upgrade for match room
