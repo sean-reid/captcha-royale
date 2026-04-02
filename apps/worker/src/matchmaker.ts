@@ -66,10 +66,6 @@ export class Matchmaker implements DurableObject {
     const pair = new WebSocketPair();
     const [client, server] = [pair[0], pair[1]];
 
-    this.state.acceptWebSocket(server);
-    this.connections.set(playerId, server);
-    this.playerBrackets.set(playerId, bracket);
-
     // Read mode from query param
     const mode = (url.searchParams.get('mode') || 'battle_royale') as GameMode;
 
@@ -81,10 +77,14 @@ export class Matchmaker implements DurableObject {
 
     // Close any existing connection for this player (second tab replaces first)
     const existingWs = this.connections.get(playerId);
-    if (existingWs) {
+    if (existingWs && existingWs !== server) {
       try { existingWs.send(JSON.stringify({ type: 'error', code: 'duplicate', message: 'Connected from another tab' })); } catch {}
       try { existingWs.close(); } catch {}
     }
+
+    this.state.acceptWebSocket(server);
+    this.connections.set(playerId, server);
+    this.playerBrackets.set(playerId, bracket);
 
     // Add to queue
     const queue = this.queues.get(bracket)!;
