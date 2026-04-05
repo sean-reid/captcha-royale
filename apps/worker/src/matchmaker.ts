@@ -11,11 +11,11 @@ interface QueueEntry {
 }
 
 const MODE_CONFIG: Record<GameMode, { minPlayers: number; targetPlayers: number; maxPlayers: number }> = {
-  battle_royale: { minPlayers: 2, targetPlayers: 8, maxPlayers: 16 },
+  battle_royale: { minPlayers: 4, targetPlayers: 8, maxPlayers: 16 },
   sprint: { minPlayers: 2, targetPlayers: 4, maxPlayers: 8 },
 };
 
-const MIN_PLAYERS = 2;
+const MIN_PLAYERS = 4;
 const TARGET_PLAYERS = 8;
 const MAX_PLAYERS = 16;
 const BRACKET_EXPANSION_30S = 1;
