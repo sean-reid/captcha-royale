@@ -19,7 +19,7 @@ pub mod booleanlogic;
 pub mod jigsaw;
 pub mod shadow;
 pub mod matrix;
-pub mod cubefolding;
+
 pub mod mirror;
 pub mod balance;
 pub mod unscramble;

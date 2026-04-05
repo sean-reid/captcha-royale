@@ -43,7 +43,7 @@ impl CaptchaGenerator for GraphReadingGenerator {
         let mut values: Vec<u32> = Vec::new();
         for _ in 0..bar_count {
             loop {
-                let v = (base_value as i32 + rng.gen_range(-(spread as i32)..=spread as i32)).max(5) as u32;
+                let v = (base_value as i32 + rng.gen_range(-spread..=spread)).max(5) as u32;
                 if !values.contains(&v) {
                     values.push(v);
                     break;

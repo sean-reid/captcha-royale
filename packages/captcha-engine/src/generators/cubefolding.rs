@@ -17,6 +17,7 @@ pub struct CubeFoldingGenerator;
 ///       [Bottom]
 ///       [Back]
 /// ```
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Face {
     Top,
@@ -27,6 +28,7 @@ enum Face {
     Back,
 }
 
+#[allow(dead_code)]
 const ALL_FACES: [Face; 6] = [
     Face::Top,
     Face::Left,

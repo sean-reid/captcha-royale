@@ -247,16 +247,12 @@ impl CaptchaGenerator for ShadowMatchingGenerator {
         let opts_top = label_y + 12.0;
         let option_spacing = width / (option_count as f32 + 1.0);
 
-        for i in 0..option_count {
+        for (i, option_shape) in options.iter().enumerate().take(option_count) {
             let opt_cx = option_spacing * (i as f32 + 1.0);
             let opt_cy = opts_top + option_size / 2.0;
 
             // Scale the shape to fit in the option area
-            // We need to recenter the primitives relative to opt_cx, opt_cy
             let scale_factor = option_size / (shape_area_height * 0.7);
-
-            // Create a translated/scaled copy for the silhouette
-            let option_shape = &options[i];
             for prim in &option_shape.primitives {
                 let shifted = match prim {
                     Primitive::Circle { cx, cy, r } => {

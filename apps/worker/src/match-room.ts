@@ -288,38 +288,45 @@ export class MatchRoom implements DurableObject {
       return;
     }
 
-    // Determine CAPTCHA type based on round
-    const captchaTypes = ['DistortedText', 'SimpleMath', 'ImageGrid'];
+    // Determine CAPTCHA type — progressively unlock tiers as rounds advance
+    const tier1 = ['DistortedText', 'SimpleMath', 'ImageGrid', 'DotCount', 'ClockReading', 'FractionComparison', 'GraphReading'];
+    const tier2 = ['RotatedObject', 'ColorPerception', 'SequenceCompletion', 'SemanticOddity', 'MirrorMatch', 'BalanceScale', 'WordUnscramble', 'GradientOrder', 'OverlapCounting', 'RotationPrediction', 'PartialOcclusion'];
+    const tier3 = ['MultiStepVerification', 'AdversarialTypography', 'PathTracing', 'BooleanLogic', 'AdversarialImage'];
+    const tier4 = ['SpatialReasoning', 'MetamorphicCaptcha', 'TimePressureCascade', 'CombinedModality'];
+
+    let captchaTypes = [...tier1];
+    if (this.roomState.round > 3) captchaTypes = [...captchaTypes, ...tier2];
+    if (this.roomState.round > 6) captchaTypes = [...captchaTypes, ...tier3];
+    if (this.roomState.round > 9) captchaTypes = [...captchaTypes, ...tier4];
     const captchaType = captchaTypes[this.roomState.round % captchaTypes.length];
 
     // Generate seed
     const seed = this.deriveSeed(this.roomState.round);
 
-    // Compute difficulty based on median level
-    const medianLevel = this.getMedianLevel();
-    const complexity = Math.min(
-      (medianLevel / 100) * 0.7 + (this.roomState.round / 20) * 0.3,
-      1.0,
-    );
-    const timeLimit = 5000 + Math.floor(complexity * 5000);
+    // Derive effective level from median ELO (ELO 1000 → level 50, 2000 → 100)
+    const medianElo = this.getMedianElo();
+    const effectiveLevel = Math.min(Math.floor(medianElo / 20), 100);
 
+    // Client computes difficulty + time limits via WASM (single source of truth in difficulty.rs).
+    // Server sends only seed, type, level, and round — no duplicated formulas.
     this.broadcast({
       type: 'round_start',
       round: this.roomState.round,
       seed: seed.toString(),
       captcha_type: captchaType,
       difficulty: {
-        level: medianLevel,
+        level: effectiveLevel,
         round_number: this.roomState.round,
-        time_limit_ms: timeLimit,
-        complexity,
-        noise: complexity * 0.8,
+        time_limit_ms: 0, // client overrides via WASM
+        complexity: 0,
+        noise: 0,
       },
-      time_limit_ms: timeLimit,
+      time_limit_ms: 0, // client overrides via WASM
     });
 
-    // Set timeout alarm
-    this.state.storage.setAlarm(Date.now() + timeLimit + 1000);
+    // Set server-side timeout alarm (generous upper bound — client enforces exact per-type limit via WASM)
+    const serverTimeout = 30_000;
+    this.state.storage.setAlarm(Date.now() + serverTimeout);
   }
 
   private handleAnswer(playerId: string, data: {
@@ -591,6 +598,13 @@ export class MatchRoom implements DurableObject {
       .map((p) => p.level)
       .sort((a, b) => a - b);
     return levels[Math.floor(levels.length / 2)] || 1;
+  }
+
+  private getMedianElo(): number {
+    const elos = Array.from(this.players.values())
+      .map((p) => p.elo)
+      .sort((a, b) => a - b);
+    return elos[Math.floor(elos.length / 2)] || 1000;
   }
 
   private getStandings() {

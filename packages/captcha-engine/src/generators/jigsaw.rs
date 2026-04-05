@@ -43,13 +43,6 @@ impl PieceShape {
         }
     }
 
-    /// Create a horizontally flipped copy
-    fn flipped(&self) -> PieceShape {
-        PieceShape {
-            points: self.points.iter().map(|(x, y)| (-x, *y)).collect(),
-        }
-    }
-
     /// Create a scaled copy
     fn scaled(&self, factor: f32) -> PieceShape {
         PieceShape {

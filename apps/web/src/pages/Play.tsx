@@ -8,14 +8,37 @@ import { Button } from '../components/ui/Button';
 import { CaptchaType } from '../types/captcha';
 import type { CaptchaInstance, PlayerAnswer, ScoreResult } from '../types/captcha';
 import { validateAnswer, scoreAnswer } from '../lib/wasm';
+import { useAuth } from '../hooks/useAuth';
 
 type GameState = 'menu' | 'playing' | 'gameover';
 
-const TIER1_TYPES = [CaptchaType.DistortedText, CaptchaType.SimpleMath, CaptchaType.ImageGrid];
-const TIER2_TYPES = [CaptchaType.RotatedObject, CaptchaType.ColorPerception, CaptchaType.SequenceCompletion];
+const TIER1_TYPES = [
+  CaptchaType.DistortedText, CaptchaType.SimpleMath, CaptchaType.ImageGrid,
+  CaptchaType.DotCount, CaptchaType.ClockReading, CaptchaType.FractionComparison,
+  CaptchaType.GraphReading,
+];
+const TIER2_TYPES = [
+  CaptchaType.RotatedObject, CaptchaType.ColorPerception, CaptchaType.SequenceCompletion,
+  CaptchaType.SemanticOddity, CaptchaType.MirrorMatch, CaptchaType.BalanceScale,
+  CaptchaType.WordUnscramble, CaptchaType.GradientOrder, CaptchaType.OverlapCounting,
+  CaptchaType.RotationPrediction, CaptchaType.PartialOcclusion,
+];
+const TIER3_TYPES = [
+  CaptchaType.MultiStepVerification, CaptchaType.AdversarialTypography,
+  CaptchaType.PathTracing, CaptchaType.BooleanLogic, CaptchaType.AdversarialImage,
+];
+const TIER4_TYPES = [
+  CaptchaType.SpatialReasoning, CaptchaType.MetamorphicCaptcha,
+  CaptchaType.TimePressureCascade, CaptchaType.CombinedModality,
+];
 
 function getAvailableTypes(round: number): CaptchaType[] {
-  // Unlock Tier 2 after round 10 in Endless mode
+  if (round > 30) {
+    return [...TIER1_TYPES, ...TIER2_TYPES, ...TIER3_TYPES, ...TIER4_TYPES];
+  }
+  if (round > 20) {
+    return [...TIER1_TYPES, ...TIER2_TYPES, ...TIER3_TYPES];
+  }
   if (round > 10) {
     return [...TIER1_TYPES, ...TIER2_TYPES];
   }
@@ -25,10 +48,14 @@ function getAvailableTypes(round: number): CaptchaType[] {
 export function Play() {
   const navigate = useNavigate();
   const { ready, error, generate } = useCaptchaEngine();
+  const { player } = useAuth();
   const [gameState, setGameState] = useState<GameState>('menu');
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
-  const [level] = useState(1);
+
+  // Derive effective level from player ELO (ELO 1000 → level 50, 2000 → 100)
+  // Same formula as match-room.ts — single source of truth is compute_difficulty in WASM
+  const eloLevel = Math.min(Math.floor((player?.elo ?? 1000) / 20), 100);
   const [currentCaptcha, setCurrentCaptcha] = useState<CaptchaInstance | null>(null);
   const [feedback, setFeedback] = useState<{ correct: boolean; result: ScoreResult } | null>(null);
   const [highScore, setHighScore] = useState(() => {
@@ -43,14 +70,15 @@ export function Play() {
       const seed = BigInt(Date.now()) * BigInt(1000) + BigInt(roundNum);
       const types = getAvailableTypes(roundNum);
       const captchaType = types[roundNum % types.length];
-      const captcha = generate(seed, captchaType, level, roundNum);
+      const effectiveLevel = eloLevel + roundNum;
+      const captcha = generate(seed, captchaType, effectiveLevel, roundNum);
       if (captcha) {
         setCurrentCaptcha(captcha);
         roundStartRef.current = Date.now();
         setFeedback(null);
       }
     },
-    [generate, level],
+    [generate, eloLevel],
   );
 
   const startGame = useCallback(() => {

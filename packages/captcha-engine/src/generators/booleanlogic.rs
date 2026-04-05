@@ -28,10 +28,10 @@ impl Gate {
     fn evaluate(&self, inputs: &[u8]) -> u8 {
         match self {
             Gate::And => {
-                if inputs.iter().all(|&v| v == 1) { 1 } else { 0 }
+                if inputs.contains(&1) && !inputs.contains(&0) { 1 } else { 0 }
             }
             Gate::Or => {
-                if inputs.iter().any(|&v| v == 1) { 1 } else { 0 }
+                if inputs.contains(&1) { 1 } else { 0 }
             }
             Gate::Not => {
                 if inputs[0] == 0 { 1 } else { 0 }

@@ -72,7 +72,6 @@ impl CaptchaGenerator for FractionComparisonGenerator {
             start_y,
             rect_w,
             rect_h,
-            0,
             n,
             "#3498db",
             "#1a3a5c",
@@ -87,7 +86,6 @@ impl CaptchaGenerator for FractionComparisonGenerator {
             start_y,
             rect_w,
             rect_h,
-            1,
             n,
             "#e74c3c",
             "#5c1a1a",
@@ -198,6 +196,7 @@ fn generate_fraction_pair(rng: &mut ChaCha8Rng, complexity: f32) -> (Fraction, F
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn draw_fraction_rect(
     svg: &mut String,
     rng: &mut ChaCha8Rng,
@@ -206,7 +205,6 @@ fn draw_fraction_rect(
     y: f32,
     w: f32,
     h: f32,
-    _index: u32,
     noise: f32,
     fill_color: &str,
     empty_color: &str,

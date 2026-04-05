@@ -28,15 +28,15 @@ const SIZES: [f32; 3] = [14.0, 22.0, 30.0];
 /// Which rules are active for pattern generation
 #[derive(Debug, Clone, Copy)]
 enum Rule {
-    ShapeProgression,
-    ColorProgression,
-    SizeProgression,
+    Shape,
+    Color,
+    Size,
 }
 
 const ALL_RULES: [Rule; 3] = [
-    Rule::ShapeProgression,
-    Rule::ColorProgression,
-    Rule::SizeProgression,
+    Rule::Shape,
+    Rule::Color,
+    Rule::Size,
 ];
 
 /// Properties for a single cell in the 3x3 grid
@@ -108,7 +108,7 @@ fn generate_grid(
 
     for row in 0..3usize {
         for col in 0..3usize {
-            let shape_idx = if rules.iter().any(|r| matches!(r, Rule::ShapeProgression)) {
+            let shape_idx = if rules.iter().any(|r| matches!(r, Rule::Shape)) {
                 // Each row cycles through 3 shapes; the starting shape differs per row
                 (shape_row_offsets[row] + shape_perm[col]) % 3
             } else {
@@ -116,14 +116,14 @@ fn generate_grid(
                 shape_perm[0]
             };
 
-            let color_idx = if rules.iter().any(|r| matches!(r, Rule::ColorProgression)) {
+            let color_idx = if rules.iter().any(|r| matches!(r, Rule::Color)) {
                 // Each row has a shifted color sequence
                 (color_row_offsets[row] + color_perm[col]) % 3
             } else {
                 color_perm[0]
             };
 
-            let size_idx = if rules.iter().any(|r| matches!(r, Rule::SizeProgression)) {
+            let size_idx = if rules.iter().any(|r| matches!(r, Rule::Size)) {
                 // Size increases across columns
                 size_perm[col]
             } else {
@@ -164,7 +164,7 @@ fn generate_wrong_option(
     let rule_to_break = &rules[rng.gen_range(0..rules.len())];
 
     match rule_to_break {
-        Rule::ShapeProgression => {
+        Rule::Shape => {
             // Use a different shape
             loop {
                 let new_shape = SHAPES[rng.gen_range(0..3)];
@@ -174,7 +174,7 @@ fn generate_wrong_option(
                 }
             }
         }
-        Rule::ColorProgression => {
+        Rule::Color => {
             loop {
                 let new_color = rng.gen_range(0..3);
                 if new_color != correct.color_idx {
@@ -183,7 +183,7 @@ fn generate_wrong_option(
                 }
             }
         }
-        Rule::SizeProgression => {
+        Rule::Size => {
             loop {
                 let new_size = rng.gen_range(0..3);
                 if new_size != correct.size_idx {
