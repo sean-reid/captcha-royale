@@ -337,7 +337,7 @@ impl CaptchaGenerator for MultiStepGenerator {
 
         write!(
             svg,
-            r##"<text x="{:.0}" y="18" font-family="sans-serif" font-size="13" fill="#cccccc" text-anchor="middle">Solve all challenges (separate answers with |)</text>"##,
+            r##"<text x="{:.0}" y="18" font-family="sans-serif" font-size="13" fill="#cccccc" text-anchor="middle" data-challenge-count="{chain_len}">Solve all challenges</text>"##,
             width / 2.0
         )
         .unwrap();

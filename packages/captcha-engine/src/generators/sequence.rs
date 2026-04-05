@@ -135,10 +135,13 @@ impl CaptchaGenerator for SequenceGenerator {
         let base_rotation = 0.0_f32;
         let base_size = 40.0_f32;
 
-        // Step amounts per sequence position
-        let rotation_step = rng.gen_range(30.0..90.0_f32);
-        let hue_step = rng.gen_range(30.0..60.0_f32);
-        let size_step = rng.gen_range(5.0..12.0_f32);
+        // Step amounts per sequence position — keep patterns clearly readable.
+        // Rotation: avoid tiny steps (hard to see) and multiples of shape symmetry
+        // (e.g. 90° for squares, 120° for triangles) which look identical.
+        // Safe range: 25-65° gives visible, unambiguous rotations for all shapes.
+        let rotation_step = rng.gen_range(25.0..65.0_f32);
+        let hue_step = rng.gen_range(50.0..80.0_f32);
+        let size_step = rng.gen_range(8.0..15.0_f32);
 
         // Build sequence items (seq_len shown + 1 correct next)
         let total_items = seq_len + 1;
@@ -208,8 +211,9 @@ impl CaptchaGenerator for SequenceGenerator {
         )
         .unwrap();
 
-        // Add noise
-        let noise_count = (3.0 + difficulty.noise * 10.0) as u32;
+        // Add noise — keep it lighter than other types since the player
+        // needs to visually compare multiple items across the sequence
+        let noise_count = (2.0 + difficulty.noise * 5.0) as u32;
         for _ in 0..noise_count {
             let x1 = rng.gen::<f32>() * width;
             let y1 = rng.gen::<f32>() * height;
@@ -279,17 +283,17 @@ impl CaptchaGenerator for SequenceGenerator {
             let (opt_rotation, opt_hue, opt_size) = if i == correct_option_idx {
                 (correct_item.rotation, correct_item.hue, correct_item.size)
             } else {
-                // Generate a wrong option by perturbing
+                // Generate a wrong option — offset by at least 2 steps so it's clearly wrong
                 match pattern {
                     PatternType::Rotation => {
                         let wrong_rot = correct_item.rotation
-                            + rotation_step * rng.gen_range(1..=3) as f32
+                            + rotation_step * rng.gen_range(2..=4) as f32
                                 * if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
                         (wrong_rot, correct_item.hue, correct_item.size)
                     }
                     PatternType::ColorCycle => {
                         let wrong_hue = (correct_item.hue
-                            + hue_step * rng.gen_range(1..=3) as f32
+                            + hue_step * rng.gen_range(2..=4) as f32
                                 * if rng.gen_bool(0.5) { 1.0 } else { -1.0 })
                             % 360.0;
                         let wrong_hue = if wrong_hue < 0.0 {
@@ -301,7 +305,7 @@ impl CaptchaGenerator for SequenceGenerator {
                     }
                     PatternType::SizeChange => {
                         let wrong_size = correct_item.size
-                            + size_step * rng.gen_range(1..=3) as f32
+                            + size_step * rng.gen_range(2..=4) as f32
                                 * if rng.gen_bool(0.5) { 1.0 } else { -1.0 };
                         let wrong_size = wrong_size.max(15.0);
                         (correct_item.rotation, correct_item.hue, wrong_size)

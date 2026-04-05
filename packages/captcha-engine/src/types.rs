@@ -22,6 +22,20 @@ pub enum CaptchaType {
     MultiStepVerification,
     SpatialReasoning,
     ContextualReasoning,
+    PathTracing,
+    BooleanLogic,
+    // Tier 1 — Foundations (extended)
+    DotCount,
+    ClockReading,
+    FractionComparison,
+    GraphReading,
+    // Tier 2 — Perceptual (extended)
+    MirrorMatch,
+    BalanceScale,
+    WordUnscramble,
+    GradientOrder,
+    OverlapCounting,
+    RotationPrediction,
     // Tier 4 — Nightmare
     MetamorphicCaptcha,
     CombinedModality,
@@ -36,21 +50,33 @@ impl CaptchaType {
             CaptchaType::DistortedText
             | CaptchaType::SimpleMath
             | CaptchaType::ImageGrid
-            | CaptchaType::SliderAlignment => 1,
+            | CaptchaType::SliderAlignment
+            | CaptchaType::DotCount
+            | CaptchaType::ClockReading
+            | CaptchaType::FractionComparison
+            | CaptchaType::GraphReading => 1,
 
             CaptchaType::RotatedObject
             | CaptchaType::PartialOcclusion
             | CaptchaType::SemanticOddity
             | CaptchaType::ToneRhythm
-            | CaptchaType::ColorPerception => 2,
+            | CaptchaType::ColorPerception
+            | CaptchaType::SequenceCompletion
+            | CaptchaType::MirrorMatch
+            | CaptchaType::BalanceScale
+            | CaptchaType::WordUnscramble
+            | CaptchaType::GradientOrder
+            | CaptchaType::OverlapCounting
+            | CaptchaType::RotationPrediction => 2,
 
             CaptchaType::AdversarialImage
-            | CaptchaType::SequenceCompletion
             | CaptchaType::MultiStepVerification
-            | CaptchaType::SpatialReasoning
-            | CaptchaType::ContextualReasoning => 3,
+            | CaptchaType::ContextualReasoning
+            | CaptchaType::PathTracing
+            | CaptchaType::BooleanLogic => 3,
 
-            CaptchaType::MetamorphicCaptcha
+            CaptchaType::SpatialReasoning
+            | CaptchaType::MetamorphicCaptcha
             | CaptchaType::CombinedModality
             | CaptchaType::AdversarialTypography
             | CaptchaType::ProceduralNovelType

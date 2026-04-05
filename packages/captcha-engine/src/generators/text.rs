@@ -108,7 +108,7 @@ fn generate_distorted_text_svg(
     }
 
     // --- Layer 3: decoy characters scattered around ---
-    let decoy_count = (4.0 + c * 10.0) as u32;
+    let decoy_count = (3.0 + c * 7.0) as u32;
     let fonts = ["monospace", "serif", "sans-serif"];
     for _ in 0..decoy_count {
         let ch = CHARS[rng.gen_range(0..CHARS.len())] as char;
@@ -186,7 +186,7 @@ fn generate_distorted_text_svg(
     }
 
     // --- Layer 6: noise dots (larger, more visible) ---
-    let dot_count = 20 + (c * 50.0) as u32;
+    let dot_count = 15 + (c * 30.0) as u32;
     for _ in 0..dot_count {
         let cx = rng.gen_range(0..width);
         let cy = rng.gen_range(0..height);

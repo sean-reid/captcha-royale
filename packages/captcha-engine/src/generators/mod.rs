@@ -10,6 +10,22 @@ pub mod oddity;
 pub mod spatial;
 pub mod multistep;
 pub mod typography;
+pub mod dotcount;
+pub mod clock;
+pub mod fraction;
+pub mod graphread;
+pub mod pathtracing;
+pub mod booleanlogic;
+pub mod jigsaw;
+pub mod shadow;
+pub mod matrix;
+pub mod cubefolding;
+pub mod mirror;
+pub mod balance;
+pub mod unscramble;
+pub mod gradient;
+pub mod overlap;
+pub mod gears;
 
 use rand_chacha::ChaCha8Rng;
 
@@ -36,6 +52,22 @@ pub fn get_generator(captcha_type: CaptchaType) -> Box<dyn CaptchaGenerator> {
         CaptchaType::SpatialReasoning => Box::new(spatial::SpatialGenerator),
         CaptchaType::MultiStepVerification => Box::new(multistep::MultiStepGenerator),
         CaptchaType::AdversarialTypography => Box::new(typography::TypographyGenerator),
+        CaptchaType::DotCount => Box::new(dotcount::DotCountGenerator),
+        CaptchaType::ClockReading => Box::new(clock::ClockReadingGenerator),
+        CaptchaType::FractionComparison => Box::new(fraction::FractionComparisonGenerator),
+        CaptchaType::GraphReading => Box::new(graphread::GraphReadingGenerator),
+        CaptchaType::PathTracing => Box::new(pathtracing::PathTracingGenerator),
+        CaptchaType::BooleanLogic => Box::new(booleanlogic::BooleanLogicGenerator),
+        CaptchaType::PartialOcclusion => Box::new(jigsaw::JigsawFitGenerator),
+        CaptchaType::AdversarialImage => Box::new(shadow::ShadowMatchingGenerator),
+        CaptchaType::CombinedModality => Box::new(matrix::MatrixPatternGenerator),
+        CaptchaType::ProceduralNovelType => Box::new(text::TextGenerator), // placeholder
+        CaptchaType::MirrorMatch => Box::new(mirror::MirrorGenerator),
+        CaptchaType::BalanceScale => Box::new(balance::BalanceGenerator),
+        CaptchaType::WordUnscramble => Box::new(unscramble::UnscrambleGenerator),
+        CaptchaType::GradientOrder => Box::new(gradient::GradientGenerator),
+        CaptchaType::OverlapCounting => Box::new(overlap::OverlapGenerator),
+        CaptchaType::RotationPrediction => Box::new(gears::GearsGenerator),
         // TODO: implement remaining generators
         _ => Box::new(text::TextGenerator), // fallback for now
     }

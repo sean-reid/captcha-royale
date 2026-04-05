@@ -40,12 +40,28 @@ export function SvgClickCaptcha({ instance, onSubmit, disabled }: SvgClickCaptch
     }
   };
 
-  const styledSvg = selected !== null
-    ? svg.replace(
-        `data-index="${selected}"`,
-        `data-index="${selected}" stroke="#ff6b6b" stroke-width="3"`,
-      )
-    : svg;
+  // Highlight the selected element by wrapping it in a styled group
+  const styledSvg = (() => {
+    if (selected === null) return svg;
+    const attr = `data-index="${selected}"`;
+    // Find the element with this data-index and add a highlight outline after it
+    const idx = svg.indexOf(attr);
+    if (idx === -1) return svg;
+    // Find the closing /> or > of this element
+    const closeIdx = svg.indexOf('/>', idx);
+    if (closeIdx === -1) return svg;
+    const afterClose = closeIdx + 2;
+    // Extract the element to read its position (look for x/cx and y/cy)
+    const elemStr = svg.substring(svg.lastIndexOf('<', idx), afterClose);
+    // Clone the rect with highlight styling
+    const highlight = elemStr
+      .replace(/fill="[^"]*"/, 'fill="rgba(255,107,107,0.2)"')
+      .replace(/stroke="[^"]*"/, 'stroke="#ff6b6b"')
+      .replace(/stroke-width="[^"]*"/, 'stroke-width="3"')
+      .replace(/data-index="[^"]*"/, '')
+      .replace(/style="[^"]*"/, '');
+    return svg.substring(0, afterClose) + highlight + svg.substring(afterClose);
+  })();
 
   return (
     <div style={styles.container}>

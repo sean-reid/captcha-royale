@@ -62,7 +62,8 @@ fn generate_cascade_svg(
     let mut svg = String::with_capacity(8192);
     write!(
         svg,
-        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">"#
+        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" data-challenge-count="{}">"#,
+        numbers.len()
     )
     .unwrap();
 

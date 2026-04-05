@@ -8,18 +8,37 @@ import type { CaptchaInstance, PlayerAnswer, ScoreResult } from '../types/captch
 import { generateCaptcha, validateAnswer, scoreAnswer, computeDifficulty } from '../lib/wasm';
 
 const ALL_TYPES: { type: CaptchaType; label: string; tier: number }[] = [
+  // Tier 1 — Foundations
   { type: CaptchaType.DistortedText, label: 'Distorted Text', tier: 1 },
   { type: CaptchaType.SimpleMath, label: 'Simple Math', tier: 1 },
   { type: CaptchaType.ImageGrid, label: 'Image Grid', tier: 1 },
+  { type: CaptchaType.DotCount, label: 'Dot Count', tier: 1 },
+  { type: CaptchaType.ClockReading, label: 'Clock Reading', tier: 1 },
+  { type: CaptchaType.FractionComparison, label: 'Fraction Comparison', tier: 1 },
+  { type: CaptchaType.GraphReading, label: 'Graph Reading', tier: 1 },
+  // Tier 2 — Perceptual
   { type: CaptchaType.RotatedObject, label: 'Rotated Object', tier: 2 },
   { type: CaptchaType.ColorPerception, label: 'Color Perception', tier: 2 },
   { type: CaptchaType.SequenceCompletion, label: 'Sequence Completion', tier: 2 },
   { type: CaptchaType.SemanticOddity, label: 'Semantic Oddity', tier: 2 },
-  { type: CaptchaType.SpatialReasoning, label: 'Spatial Reasoning', tier: 3 },
+  { type: CaptchaType.MirrorMatch, label: 'Mirror Match', tier: 2 },
+  { type: CaptchaType.BalanceScale, label: 'Balance Scale', tier: 2 },
+  { type: CaptchaType.WordUnscramble, label: 'Word Unscramble', tier: 2 },
+  { type: CaptchaType.GradientOrder, label: 'Gradient Order', tier: 2 },
+  { type: CaptchaType.OverlapCounting, label: 'Overlap Counting', tier: 2 },
+  { type: CaptchaType.RotationPrediction, label: 'Gear Rotation', tier: 2 },
+  { type: CaptchaType.PartialOcclusion, label: 'Jigsaw Fit', tier: 2 },
+  // Tier 3 — Cognitive
   { type: CaptchaType.MultiStepVerification, label: 'Multi-step', tier: 3 },
   { type: CaptchaType.AdversarialTypography, label: 'Adversarial Typography', tier: 3 },
+  { type: CaptchaType.PathTracing, label: 'Path Tracing', tier: 3 },
+  { type: CaptchaType.BooleanLogic, label: 'Boolean Logic', tier: 3 },
+  { type: CaptchaType.AdversarialImage, label: 'Shadow Matching', tier: 3 },
+  // Tier 4 — Nightmare
+  { type: CaptchaType.SpatialReasoning, label: 'Spatial Reasoning', tier: 4 },
   { type: CaptchaType.MetamorphicCaptcha, label: 'Metamorphic', tier: 4 },
   { type: CaptchaType.TimePressureCascade, label: 'Time Pressure Cascade', tier: 4 },
+  { type: CaptchaType.CombinedModality, label: 'Matrix Pattern', tier: 4 },
 ];
 
 const TIER_COLORS: Record<number, string> = {

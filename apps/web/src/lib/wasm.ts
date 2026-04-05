@@ -12,25 +12,43 @@ export async function initWasm(): Promise<void> {
 
 // Map our TS enum to the WASM enum value
 const CAPTCHA_TYPE_MAP: Record<CaptchaType, number> = {
+  // Tier 1
   DistortedText: 0,
   SimpleMath: 1,
   ImageGrid: 2,
   SliderAlignment: 3,
+  // Tier 2
   RotatedObject: 4,
   PartialOcclusion: 5,
   SemanticOddity: 6,
   ToneRhythm: 7,
   ColorPerception: 8,
+  // Tier 3
   AdversarialImage: 9,
   SequenceCompletion: 10,
   MultiStepVerification: 11,
   SpatialReasoning: 12,
   ContextualReasoning: 13,
-  MetamorphicCaptcha: 14,
-  CombinedModality: 15,
-  AdversarialTypography: 16,
-  ProceduralNovelType: 17,
-  TimePressureCascade: 18,
+  PathTracing: 14,
+  BooleanLogic: 15,
+  // Tier 1 extended
+  DotCount: 16,
+  ClockReading: 17,
+  FractionComparison: 18,
+  GraphReading: 19,
+  // Tier 2 extended
+  MirrorMatch: 20,
+  BalanceScale: 21,
+  WordUnscramble: 22,
+  GradientOrder: 23,
+  OverlapCounting: 24,
+  RotationPrediction: 25,
+  // Tier 4
+  MetamorphicCaptcha: 26,
+  CombinedModality: 27,
+  AdversarialTypography: 28,
+  ProceduralNovelType: 29,
+  TimePressureCascade: 30,
 };
 
 export function generateCaptcha(

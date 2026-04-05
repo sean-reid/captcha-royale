@@ -3,7 +3,8 @@ export function getEloBracket(elo: number): string {
   if (elo < 1000) return 'Silver';
   if (elo < 1200) return 'Gold';
   if (elo < 1500) return 'Platinum';
-  return 'Diamond';
+  if (elo < 2000) return 'Diamond';
+  return 'Master';
 }
 
 export function getBracketColor(elo: number): string {
@@ -11,7 +12,8 @@ export function getBracketColor(elo: number): string {
   if (elo < 1000) return '#c0c0c0';
   if (elo < 1200) return '#ffd700';
   if (elo < 1500) return '#e5e4e2';
-  return '#b9f2ff';
+  if (elo < 2000) return '#b9f2ff';
+  return '#a855f7';
 }
 
 const BRACKET_COLORS: Record<string, string> = {
@@ -20,6 +22,7 @@ const BRACKET_COLORS: Record<string, string> = {
   gold: '#ffd700',
   platinum: '#e5e4e2',
   diamond: '#b9f2ff',
+  master: '#a855f7',
 };
 
 export function getBracketColorByName(name: string): string {

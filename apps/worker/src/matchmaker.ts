@@ -21,7 +21,7 @@ const MAX_PLAYERS = 16;
 const BRACKET_EXPANSION_30S = 1;
 const BRACKET_EXPANSION_60S = 2;
 
-const BRACKETS = ['bronze', 'silver', 'gold', 'platinum', 'diamond'] as const;
+const BRACKETS = ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'master'] as const;
 type Bracket = (typeof BRACKETS)[number];
 
 export class Matchmaker implements DurableObject {
@@ -239,7 +239,8 @@ export class Matchmaker implements DurableObject {
     if (elo < 1000) return 'silver';
     if (elo < 1200) return 'gold';
     if (elo < 1500) return 'platinum';
-    return 'diamond';
+    if (elo < 2000) return 'diamond';
+    return 'master';
   }
 
   private oldestWait(queue: QueueEntry[]): number {
