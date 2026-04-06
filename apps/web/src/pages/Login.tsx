@@ -1,8 +1,12 @@
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/Button';
 
 export function Login() {
-  const { login } = useAuth();
+  const { login, player, loading } = useAuth();
+
+  if (loading) return null;
+  if (player) return <Navigate to="/" replace />;
 
   return (
     <div style={styles.container}>
