@@ -35,19 +35,40 @@ captcha-royale/
 │           ├── types.rs         # CaptchaInstance, Solution, PlayerAnswer
 │           ├── rng.rs           # HMAC-SHA256 seed derivation, ChaCha8 RNG
 │           ├── difficulty.rs    # Level/round -> difficulty params
-│           └── generators/      # One per CAPTCHA type
+│           └── generators/      # One per CAPTCHA type (28 generators)
 │               ├── text.rs      # Distorted text with multi-layer noise
 │               ├── math.rs      # Math expressions with visual disruption
 │               ├── grid.rs      # "Select all squares with X" shape grids
 │               ├── rotation.rs  # Find the correctly oriented object
 │               ├── color.rs     # Ishihara-style color perception
-│               └── sequence.rs  # Visual pattern completion
+│               ├── sequence.rs  # Visual pattern completion
+│               ├── dotcount.rs  # Count scattered dots
+│               ├── clock.rs     # Read analog clock faces
+│               ├── fraction.rs  # Compare visual fractions
+│               ├── graphread.rs # Read values from charts
+│               ├── mirror.rs    # Find the mirrored match
+│               ├── balance.rs   # Balance scale reasoning
+│               ├── unscramble.rs # Word unscramble
+│               ├── gradient.rs  # Order color gradients
+│               ├── overlap.rs   # Count overlapping shapes
+│               ├── gears.rs     # Predict gear rotation direction
+│               ├── oddity.rs    # Find the semantic odd-one-out
+│               ├── jigsaw.rs    # Partial occlusion / jigsaw
+│               ├── shadow.rs    # Adversarial image recognition
+│               ├── pathtracing.rs # Trace paths through mazes
+│               ├── booleanlogic.rs # Evaluate boolean expressions
+│               ├── multistep.rs # Multi-step verification chains
+│               ├── spatial.rs   # 3D spatial reasoning
+│               ├── metamorphic.rs # Shape-shifting CAPTCHAs
+│               ├── matrix.rs    # Combined modality challenges
+│               ├── typography.rs # Adversarial typography
+│               └── cascade.rs   # Time-pressure cascading tasks
 ├── apps/
 │   ├── web/                     # React SPA
 │   │   └── src/
-│   │       ├── pages/           # Home, Play (Endless), Queue, Match, Results, Profile, Leaderboard, Login
+│   │       ├── pages/           # Home, Play, Playtest, Queue, Match, Results, Profile, Leaderboard, Login
 │   │       ├── components/
-│   │       │   ├── captcha/     # CaptchaRenderer + type-specific renderers
+│   │       │   ├── captcha/     # CaptchaRenderer + type-specific renderers (Text, Math, Grid, Rotation, Color, Sequence, SvgText, SvgMultiText, SvgClick)
 │   │       │   ├── match/       # Timer, PlayerList, EliminationFeed, RoundIndicator
 │   │       │   ├── ui/          # Button, Modal
 │   │       │   └── layout/      # Header, Footer
@@ -70,11 +91,39 @@ captcha-royale/
 - Distorted Text — warped characters with bezier noise, decoys, and overlapping strokes
 - Simple Math — arithmetic rendered with visual disruption and decoy digits
 - Image Grid — select all cells containing a target shape
+- Slider Alignment — align elements to a target position
+- Dot Count — count scattered dots under time pressure
+- Clock Reading — read time from procedurally generated analog clocks
+- Fraction Comparison — compare visual fraction representations
+- Graph Reading — extract values from procedurally generated charts
 
 **Tier 2 — Perceptual** (unlocked after round 10 in Endless, level 11+ in multiplayer)
 - Rotated Object — find the correctly oriented object among rotated variants
+- Partial Occlusion — identify partially hidden objects (jigsaw-style)
+- Semantic Oddity — find the odd-one-out in a set
 - Color Perception — Ishihara-inspired grid, find the differently shaded tile
 - Sequence Completion — identify the next item in a visual pattern
+- Mirror Match — find the mirrored counterpart
+- Balance Scale — determine which side is heavier
+- Word Unscramble — rearrange letters to form a word
+- Gradient Order — sort colors by gradient progression
+- Overlap Counting — count overlapping shapes
+- Rotation Prediction — predict gear rotation direction
+
+**Tier 3 — Cognitive** (high-difficulty multiplayer and late Endless)
+- Adversarial Image — recognize images with adversarial perturbations
+- Multi-Step Verification — chained verification challenges
+- Spatial Reasoning — 3D spatial puzzles
+- Contextual Reasoning — context-dependent logic puzzles
+- Path Tracing — trace correct paths through visual mazes
+- Boolean Logic — evaluate boolean expressions visually
+
+**Tier 4 — Nightmare** (Diamond bracket and Endless 50+)
+- Metamorphic CAPTCHA — shape-shifting challenges that mutate mid-solve
+- Combined Modality — multiple CAPTCHA types fused into one
+- Adversarial Typography — deceptive letterforms and font trickery
+- Procedural Novel Type — randomly generated never-before-seen CAPTCHA formats
+- Time Pressure Cascade — rapid-fire cascading micro-CAPTCHAs
 
 ## Game Modes
 
@@ -167,7 +216,7 @@ npx wrangler deploy
 ## Scoring
 
 ```
-base_points = captcha_tier * 10          (T1=10, T2=20, T3=30, T4=40)
+base_points = captcha_tier * 10          (Tier 1=10, Tier 2=20, Tier 3=30, Tier 4=40)
 speed_bonus = max(0, (time_limit - solve_time) / time_limit) * base_points
 total       = base_points + speed_bonus  (range: base to 2x base)
 ```
