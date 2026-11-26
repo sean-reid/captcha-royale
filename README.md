@@ -210,7 +210,7 @@ npx wrangler deploy
 | `VITE_API_URL` | Frontend build | Worker URL for API/WebSocket calls |
 | `GOOGLE_CLIENT_ID` | Worker secret | Google OAuth |
 | `GOOGLE_CLIENT_SECRET` | Worker secret | Google OAuth |
-| `FRONTEND_URL` | Worker secret | OAuth redirect destination |
+| `FRONTEND_URL` | Worker secret | OAuth redirect destination and CORS origin |
 | `BASE_URL` | Worker secret | OAuth callback URL base (defaults to request origin) |
 
 ## Scoring
