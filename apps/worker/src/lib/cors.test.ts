@@ -3,6 +3,7 @@ import { allowedOrigins, corsOriginFor } from './cors';
 
 const NEW = 'https://captcha-royale.dwainosaur.com';
 const OLD = 'https://sean-reid.github.io';
+const DEFAULT = 'http://localhost:5173';
 
 describe('corsOriginFor', () => {
   it('accepts the origin named by FRONTEND_URL', () => {
@@ -10,11 +11,12 @@ describe('corsOriginFor', () => {
   });
 
   it('ignores a path on FRONTEND_URL', () => {
-    expect(corsOriginFor(OLD, `${OLD}/captcha-royale`)).toBe(OLD);
+    expect(corsOriginFor(NEW, `${NEW}/app`)).toBe(NEW);
   });
 
-  it('keeps accepting the old origin after FRONTEND_URL moves', () => {
-    expect(corsOriginFor(OLD, NEW)).toBe(OLD);
+  it('rejects the old github.io origin', () => {
+    expect(corsOriginFor(OLD, NEW)).toBe(NEW);
+    expect(allowedOrigins(NEW)).not.toContain(OLD);
   });
 
   it('accepts the local dev origins', () => {
@@ -25,8 +27,10 @@ describe('corsOriginFor', () => {
     expect(corsOriginFor('https://evil.example', NEW)).toBe(NEW);
   });
 
-  it('falls back to the old origin when FRONTEND_URL is unset', () => {
-    expect(corsOriginFor('https://evil.example', undefined)).toBe(OLD);
+  it('falls back to the first dev origin when FRONTEND_URL is unset', () => {
+    expect(corsOriginFor('https://evil.example', undefined)).toBe(DEFAULT);
+    expect(corsOriginFor(OLD, undefined)).toBe(DEFAULT);
+    expect(allowedOrigins(undefined)).toEqual([DEFAULT, 'http://localhost:4173']);
   });
 
   it.each([
@@ -49,8 +53,8 @@ describe('corsOriginFor', () => {
   });
 
   it('skips a FRONTEND_URL that does not parse', () => {
-    expect(corsOriginFor('https://captcha-royale.dwainosaur.com', 'captcha-royale.dwainosaur.com')).toBe(OLD);
-    expect(corsOriginFor(OLD, 'captcha-royale.dwainosaur.com')).toBe(OLD);
+    expect(corsOriginFor(NEW, 'captcha-royale.dwainosaur.com')).toBe(DEFAULT);
+    expect(corsOriginFor(OLD, 'captcha-royale.dwainosaur.com')).toBe(DEFAULT);
     expect(allowedOrigins('captcha-royale.dwainosaur.com')).not.toContain('captcha-royale.dwainosaur.com');
   });
 });
