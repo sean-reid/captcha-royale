@@ -1,10 +1,19 @@
+// Allowed only while the old address still serves or redirects traffic.
 export const LEGACY_FRONTEND_ORIGIN = 'https://sean-reid.github.io';
 
 const DEV_ORIGINS = ['http://localhost:5173', 'http://localhost:4173'];
 
+function originOf(url: string | undefined): string {
+  if (!url) return '';
+  try {
+    return new URL(url).origin;
+  } catch {
+    return '';
+  }
+}
+
 export function allowedOrigins(frontendUrl: string | undefined): string[] {
-  const frontend = frontendUrl ? new URL(frontendUrl).origin : '';
-  return [frontend, LEGACY_FRONTEND_ORIGIN, ...DEV_ORIGINS].filter(Boolean);
+  return [originOf(frontendUrl), LEGACY_FRONTEND_ORIGIN, ...DEV_ORIGINS].filter(Boolean);
 }
 
 export function corsOriginFor(origin: string, frontendUrl: string | undefined): string {

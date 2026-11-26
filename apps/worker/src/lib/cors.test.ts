@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { corsOriginFor } from './cors';
+import { allowedOrigins, corsOriginFor } from './cors';
 
 const NEW = 'https://captcha-royale.dwainosaur.com';
 const OLD = 'https://sean-reid.github.io';
@@ -27,5 +27,30 @@ describe('corsOriginFor', () => {
 
   it('falls back to the old origin when FRONTEND_URL is unset', () => {
     expect(corsOriginFor('https://evil.example', undefined)).toBe(OLD);
+  });
+
+  it.each([
+    'https://sean-reid.github.io.evil.example',
+    'https://evil-sean-reid.github.io',
+    'https://someone-else.github.io',
+    'http://sean-reid.github.io',
+    'https://captcha-royale.dwainosaur.com.evil.example',
+    'http://captcha-royale.dwainosaur.com',
+  ])('rejects the lookalike origin %s', (lookalike) => {
+    expect(corsOriginFor(lookalike, NEW)).toBe(NEW);
+  });
+
+  it('treats an empty Origin as unknown', () => {
+    expect(corsOriginFor('', NEW)).toBe(NEW);
+  });
+
+  it('accepts localhost 4173', () => {
+    expect(corsOriginFor('http://localhost:4173', NEW)).toBe('http://localhost:4173');
+  });
+
+  it('skips a FRONTEND_URL that does not parse', () => {
+    expect(corsOriginFor('https://captcha-royale.dwainosaur.com', 'captcha-royale.dwainosaur.com')).toBe(OLD);
+    expect(corsOriginFor(OLD, 'captcha-royale.dwainosaur.com')).toBe(OLD);
+    expect(allowedOrigins('captcha-royale.dwainosaur.com')).not.toContain('captcha-royale.dwainosaur.com');
   });
 });
