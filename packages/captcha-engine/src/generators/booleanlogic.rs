@@ -206,9 +206,9 @@ impl CaptchaGenerator for BooleanLogicGenerator {
 
         let mut wire_positions: Vec<(f32, f32)> = Vec::new(); // (right_x, center_y)
 
-        for i in 0..input_count {
+        for (i, input) in circuit.inputs.iter().enumerate() {
             let iy = content_top + (i as f32 + 0.5) * (content_h / input_count as f32);
-            let label = format!("{}={}", (b'A' + i as u8) as char, circuit.inputs[i]);
+            let label = format!("{}={}", (b'A' + i as u8) as char, input);
             write!(svg,
                 r##"<rect x="{:.1}" y="{:.1}" width="50" height="28" rx="4" fill="#1e6b3a" stroke="#27ae60" stroke-width="1.5"/>"##,
                 input_x, iy - 14.0
@@ -233,9 +233,8 @@ impl CaptchaGenerator for BooleanLogicGenerator {
         struct GateLayout { gx: f32, gy: f32, gate_idx: usize }
         let mut gate_layouts: Vec<GateLayout> = Vec::new();
 
-        for g in 0..gate_count {
+        for (g, (_, inputs_idx)) in circuit.gates.iter().enumerate() {
             let gx = gate_col_start + g as f32 * col_width;
-            let (_, ref inputs_idx) = circuit.gates[g];
 
             let min_y = inputs_idx.iter().map(|&i| wire_positions[i].1).fold(f32::MAX, f32::min);
             let max_y = inputs_idx.iter().map(|&i| wire_positions[i].1).fold(f32::MIN, f32::max);
