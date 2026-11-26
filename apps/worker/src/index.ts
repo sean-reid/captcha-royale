@@ -3,6 +3,7 @@ import { handleProfile, handleProfileHistory, handleProfileAchievements } from '
 import { handleLeaderboard, handleLeaderboardAround } from './api/leaderboard';
 import { handleMatchPrivate, handleMatchJoin } from './api/match';
 import { validateSession } from './lib/session';
+import { corsOriginFor } from './lib/cors';
 
 export { MatchRoom } from './match-room';
 export { Matchmaker } from './matchmaker';
@@ -29,17 +30,7 @@ export default {
 
     // CORS — allow the frontend origin with credentials
     const origin = request.headers.get('Origin') || '';
-    // FRONTEND_URL may include a path (e.g. https://x.github.io/captcha-royale)
-    // but the Origin header is just the scheme+host, so extract the origin from FRONTEND_URL
-    const frontendOrigin = env.FRONTEND_URL
-      ? new URL(env.FRONTEND_URL).origin
-      : '';
-    const allowedOrigins = [
-      frontendOrigin,
-      'http://localhost:5173',
-      'http://localhost:4173',
-    ].filter(Boolean);
-    const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0] || '*';
+    const corsOrigin = corsOriginFor(origin, env.FRONTEND_URL);
 
     const corsHeaders: Record<string, string> = {
       'Access-Control-Allow-Origin': corsOrigin,
@@ -49,7 +40,7 @@ export default {
     };
 
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
+      return new Response(null, { headers: { ...corsHeaders, Vary: 'Origin' } });
     }
 
     try {
@@ -126,6 +117,7 @@ export default {
       // Add CORS headers to response
       const newHeaders = new Headers(response.headers);
       Object.entries(corsHeaders).forEach(([k, v]) => newHeaders.set(k, v));
+      newHeaders.append('Vary', 'Origin');
       return new Response(response.body, {
         status: response.status,
         statusText: response.statusText,
@@ -135,7 +127,7 @@ export default {
       console.error('Worker error:', err);
       return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        headers: { 'Content-Type': 'application/json', ...corsHeaders, Vary: 'Origin' },
       });
     }
   },

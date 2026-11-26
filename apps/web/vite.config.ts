@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react';
 import wasm from 'vite-plugin-wasm';
 import path from 'path';
 
-export default defineConfig(({ mode }) => ({
-  base: mode === 'production' ? '/captcha-royale/' : '/',
+export default defineConfig({
+  base: '/',
   plugins: [react(), wasm()],
   resolve: {
     alias: {
@@ -22,4 +22,4 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-}));
+});
