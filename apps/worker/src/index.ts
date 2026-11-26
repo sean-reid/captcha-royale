@@ -3,6 +3,7 @@ import { handleProfile, handleProfileHistory, handleProfileAchievements } from '
 import { handleLeaderboard, handleLeaderboardAround } from './api/leaderboard';
 import { handleMatchPrivate, handleMatchJoin } from './api/match';
 import { validateSession } from './lib/session';
+import { corsOriginFor } from './lib/cors';
 
 export { MatchRoom } from './match-room';
 export { Matchmaker } from './matchmaker';
@@ -29,17 +30,7 @@ export default {
 
     // CORS — allow the frontend origin with credentials
     const origin = request.headers.get('Origin') || '';
-    // FRONTEND_URL may include a path (e.g. https://x.github.io/captcha-royale)
-    // but the Origin header is just the scheme+host, so extract the origin from FRONTEND_URL
-    const frontendOrigin = env.FRONTEND_URL
-      ? new URL(env.FRONTEND_URL).origin
-      : '';
-    const allowedOrigins = [
-      frontendOrigin,
-      'http://localhost:5173',
-      'http://localhost:4173',
-    ].filter(Boolean);
-    const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0] || '*';
+    const corsOrigin = corsOriginFor(origin, env.FRONTEND_URL);
 
     const corsHeaders: Record<string, string> = {
       'Access-Control-Allow-Origin': corsOrigin,
