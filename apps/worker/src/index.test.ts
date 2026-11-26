@@ -8,11 +8,23 @@ describe('worker CORS headers', () => {
     const res = await worker.fetch(
       new Request('https://w.example/api/leaderboard', {
         method: 'OPTIONS',
+        headers: { Origin: 'http://localhost:4173' },
+      }),
+      env,
+    );
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:4173');
+    expect(res.headers.get('Vary')).toBe('Origin');
+  });
+
+  it('answers a preflight from the old github.io origin with the configured one', async () => {
+    const res = await worker.fetch(
+      new Request('https://w.example/api/leaderboard', {
+        method: 'OPTIONS',
         headers: { Origin: 'https://sean-reid.github.io' },
       }),
       env,
     );
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://sean-reid.github.io');
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://captcha-royale.dwainosaur.com');
     expect(res.headers.get('Vary')).toBe('Origin');
   });
 
@@ -22,7 +34,7 @@ describe('worker CORS headers', () => {
       { FRONTEND_URL: 'captcha-royale.dwainosaur.com' } as Env,
     );
     expect(res.status).toBe(200);
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://sean-reid.github.io');
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:5173');
   });
 
   it('adds the allow-origin and Vary headers to a handler response', async () => {
@@ -46,12 +58,12 @@ describe('worker CORS headers', () => {
     } as unknown as KVNamespace;
     const res = await worker.fetch(
       new Request('https://w.example/api/leaderboard', {
-        headers: { Origin: 'https://sean-reid.github.io' },
+        headers: { Origin: 'https://captcha-royale.dwainosaur.com' },
       }),
       { ...env, KV: kv } as Env,
     );
     expect(res.status).toBe(500);
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://sean-reid.github.io');
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://captcha-royale.dwainosaur.com');
     expect(res.headers.get('Vary')).toBe('Origin');
   });
 });
