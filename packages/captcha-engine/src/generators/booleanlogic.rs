@@ -418,4 +418,28 @@ mod tests {
         assert_eq!(Gate::Not.evaluate(&[0]), 1);
         assert_eq!(Gate::Not.evaluate(&[1]), 0);
     }
+
+    #[test]
+    fn test_booleanlogic_svg_is_pinned_for_fixed_seed() {
+        let mut rng = rng_from_seed(7);
+        let difficulty = DifficultyParams {
+            level: 1,
+            round_number: 1,
+            time_limit_ms: 7000,
+            complexity: 0.0,
+            noise: 0.0,
+        };
+        let instance = BooleanLogicGenerator.generate(&mut rng, &difficulty);
+        let (RenderPayload::Svg(svg), Solution::Number(n)) =
+            (&instance.render_data, &instance.solution)
+        else {
+            panic!("Expected SVG and Number solution");
+        };
+        let hash = svg.bytes().fold(0xcbf29ce484222325_u64, |h, b| {
+            (h ^ b as u64).wrapping_mul(0x100000001b3)
+        });
+        assert_eq!(svg.len(), 1737);
+        assert_eq!(hash, 0x2feaa077a4fbbde5);
+        assert_eq!(*n, 0.0);
+    }
 }
