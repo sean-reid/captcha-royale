@@ -206,9 +206,9 @@ impl CaptchaGenerator for BooleanLogicGenerator {
 
         let mut wire_positions: Vec<(f32, f32)> = Vec::new(); // (right_x, center_y)
 
-        for i in 0..input_count {
+        for (i, input) in circuit.inputs.iter().enumerate() {
             let iy = content_top + (i as f32 + 0.5) * (content_h / input_count as f32);
-            let label = format!("{}={}", (b'A' + i as u8) as char, circuit.inputs[i]);
+            let label = format!("{}={}", (b'A' + i as u8) as char, input);
             write!(svg,
                 r##"<rect x="{:.1}" y="{:.1}" width="50" height="28" rx="4" fill="#1e6b3a" stroke="#27ae60" stroke-width="1.5"/>"##,
                 input_x, iy - 14.0
@@ -233,9 +233,8 @@ impl CaptchaGenerator for BooleanLogicGenerator {
         struct GateLayout { gx: f32, gy: f32, gate_idx: usize }
         let mut gate_layouts: Vec<GateLayout> = Vec::new();
 
-        for g in 0..gate_count {
+        for (g, (_, inputs_idx)) in circuit.gates.iter().enumerate() {
             let gx = gate_col_start + g as f32 * col_width;
-            let (_, ref inputs_idx) = circuit.gates[g];
 
             let min_y = inputs_idx.iter().map(|&i| wire_positions[i].1).fold(f32::MAX, f32::min);
             let max_y = inputs_idx.iter().map(|&i| wire_positions[i].1).fold(f32::MIN, f32::max);
@@ -418,5 +417,29 @@ mod tests {
         // NOT gate
         assert_eq!(Gate::Not.evaluate(&[0]), 1);
         assert_eq!(Gate::Not.evaluate(&[1]), 0);
+    }
+
+    #[test]
+    fn test_booleanlogic_svg_is_pinned_for_fixed_seed() {
+        let mut rng = rng_from_seed(7);
+        let difficulty = DifficultyParams {
+            level: 1,
+            round_number: 1,
+            time_limit_ms: 7000,
+            complexity: 0.0,
+            noise: 0.0,
+        };
+        let instance = BooleanLogicGenerator.generate(&mut rng, &difficulty);
+        let (RenderPayload::Svg(svg), Solution::Number(n)) =
+            (&instance.render_data, &instance.solution)
+        else {
+            panic!("Expected SVG and Number solution");
+        };
+        let hash = svg.bytes().fold(0xcbf29ce484222325_u64, |h, b| {
+            (h ^ b as u64).wrapping_mul(0x100000001b3)
+        });
+        assert_eq!(svg.len(), 1737);
+        assert_eq!(hash, 0x2feaa077a4fbbde5);
+        assert_eq!(*n, 0.0);
     }
 }
