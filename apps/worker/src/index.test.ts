@@ -24,4 +24,34 @@ describe('worker CORS headers', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://sean-reid.github.io');
   });
+
+  it('adds the allow-origin and Vary headers to a handler response', async () => {
+    const kv = { get: async () => [{ id: 'p1' }] } as unknown as KVNamespace;
+    const res = await worker.fetch(
+      new Request('https://w.example/api/leaderboard', {
+        headers: { Origin: 'https://captcha-royale.dwainosaur.com' },
+      }),
+      { ...env, KV: kv } as Env,
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://captcha-royale.dwainosaur.com');
+    expect(res.headers.get('Vary')).toBe('Origin');
+  });
+
+  it('adds Vary: Origin to a 500 from a throwing handler', async () => {
+    const kv = {
+      get: async () => {
+        throw new Error('kv down');
+      },
+    } as unknown as KVNamespace;
+    const res = await worker.fetch(
+      new Request('https://w.example/api/leaderboard', {
+        headers: { Origin: 'https://sean-reid.github.io' },
+      }),
+      { ...env, KV: kv } as Env,
+    );
+    expect(res.status).toBe(500);
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://sean-reid.github.io');
+    expect(res.headers.get('Vary')).toBe('Origin');
+  });
 });
