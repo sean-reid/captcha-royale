@@ -19,7 +19,8 @@ if (redirectPath) {
 
 const legacyPrefix = /^\/captcha-royale(?=\/|$)/;
 if (legacyPrefix.test(location.pathname)) {
-  history.replaceState(null, '', location.pathname.replace(legacyPrefix, '') + location.search + location.hash);
+  const path = location.pathname.replace(legacyPrefix, '') || '/';
+  history.replaceState(null, '', path + location.search + location.hash);
 }
 
 createRoot(document.getElementById('root')!).render(
