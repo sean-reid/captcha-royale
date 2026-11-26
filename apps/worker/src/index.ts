@@ -40,7 +40,7 @@ export default {
     };
 
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
+      return new Response(null, { headers: { ...corsHeaders, Vary: 'Origin' } });
     }
 
     try {
@@ -117,6 +117,7 @@ export default {
       // Add CORS headers to response
       const newHeaders = new Headers(response.headers);
       Object.entries(corsHeaders).forEach(([k, v]) => newHeaders.set(k, v));
+      newHeaders.append('Vary', 'Origin');
       return new Response(response.body, {
         status: response.status,
         statusText: response.statusText,
@@ -126,7 +127,7 @@ export default {
       console.error('Worker error:', err);
       return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        headers: { 'Content-Type': 'application/json', ...corsHeaders, Vary: 'Origin' },
       });
     }
   },
